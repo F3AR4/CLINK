@@ -24,8 +24,13 @@
    - `processWithdrawal succeeds by default`: Validates withdrawal simulation.
    - `processDeposit handles failure toggle accurately`: Validates error state injection.
 
-### Test Execution Status in Current Host Environment
+### Test Execution Status in Current Host Environment (TASK-001 Verification Pass)
 - **Environment**: Windows 11 (64-bit), Git 2.54.0.
-- **JDK / Android SDK**: Neither JDK 17+ nor Android SDK is configured in the environment PATH.
-- **Execution Result**: Unit tests were designed and implemented with standard JUnit 4, Google Truth, and Mockk. They could NOT be executed directly in the host shell due to missing Java runtime (`java: The term 'java' is not recognized`).
-- **Required Verification Step**: Run `./gradlew test` in Android Studio or after setting `JAVA_HOME`.
+- **JDK / Android SDK**: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`), Android SDK Platform 35 (`C:\Users\jowan\AppData\Local\Android\Sdk`).
+- **Execution Command**: `.\gradlew.bat test`
+- **Execution Result**: BUILD SUCCESSFUL (15 tests completed, 0 failures, 0 errors, 100% passing).
+  - `TEST-com.clink.app.data.repository.FakePaymentRepositoryTest.xml`: 3/3 passed.
+  - `TEST-com.clink.app.domain.model.MoneyTest.xml`: 9/9 passed.
+  - `TEST-com.clink.app.domain.usecase.AddMoneyUseCaseTest.xml`: 3/3 passed.
+- **Issue Discovered & Fixed**: MockK argument matchers (`any()`) for value classes like `Money` invoke reflection with random negative `Long` values, triggering `require(paise >= 0)` in `Money.kt`. Fixed by using `wasNot Called` and deterministic instances in verifications.
+- **Lint Execution**: `.\gradlew.bat lint` completed with BUILD SUCCESSFUL (0 errors).

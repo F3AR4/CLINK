@@ -1,10 +1,11 @@
 # CLINK Known Issues & Technical Debt
 
-## Environment Limitations
-1. **Host Environment Lacks JDK and Android SDK**:
-   - The current Windows host does not have JDK 17+ or the Android SDK (command-line tools / platform-tools) installed in PATH or standard system directories.
-   - Consequently, local command line `./gradlew.bat assembleDebug` or `./gradlew.bat test` cannot execute within the agent subshell without a configured JDK.
-   - The codebase must be opened in Android Studio (Ladybug / Iguana / Jellyfish) with embedded JDK 17 or 21, or JDK must be installed on the host system.
+## Environment Status
+1. **Host Environment JDK & SDK Resolved**:
+   - Environment has Android Studio 2026.1.4, Android SDK at `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35 installed), and JDK 21 at `C:\Users\jowan\.jdks\jbr-21.0.11`.
+   - `gradle-wrapper.jar` was generated and `gradle.properties` created. CLI builds, tests, and lints execute cleanly.
+2. **No Active Emulator or Physical Device Connected**:
+   - `adb devices` shows no connected Android device or running emulator on the host. Live UI interaction was verified up to APK compilation and static validation; live on-device testing requires starting an emulator in Android Studio.
 
 ## Technical Debt & Placeholders
 1. **Screen UI is Placeholder**:

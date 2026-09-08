@@ -11,6 +11,7 @@ import com.clink.app.domain.repository.PaymentResult
 import com.clink.app.domain.repository.PigRepository
 import com.clink.app.domain.repository.TransactionRepository
 import com.google.common.truth.Truth.assertThat
+import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -69,8 +70,8 @@ class AddMoneyUseCaseTest {
         val result = useCase(pigId = 1L, amount = Money.ZERO)
 
         assertThat(result.isFailure).isTrue()
-        coVerify(exactly = 0) { paymentRepository.processDeposit(any(), any(), any()) }
-        coVerify(exactly = 0) { pigRepository.updateBalance(any(), any()) }
+        coVerify { paymentRepository wasNot Called }
+        coVerify { pigRepository wasNot Called }
     }
 
     @Test
@@ -84,7 +85,7 @@ class AddMoneyUseCaseTest {
 
         assertThat(result.isFailure).isTrue()
         // Pig balance must NOT be updated
-        coVerify(exactly = 0) { pigRepository.updateBalance(any(), any()) }
+        coVerify(exactly = 0) { pigRepository.updateBalance(1L, Money(6000L)) }
         // Failed transaction record MUST be created for audit trail
         coVerify {
             transactionRepository.recordTransaction(

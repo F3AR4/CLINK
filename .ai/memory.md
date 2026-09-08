@@ -23,6 +23,13 @@
 
 ## 4. Current State
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
-- Initial Room database (`ClinkDatabase`) and entities (`PigEntity`, `TransactionEntity`, `GoalEntity`) established.
+- Initial Room database (`ClinkDatabase`) and entities (`PigEntity`, `TransactionEntity`, `GoalEntity`) established; schema v1 exported.
 - `FakePaymentRepository` configured for simulated deposits and withdrawals.
 - Compose Theme (`ClinkPink`, `ClinkNavy`, `ClinkTeal`) and 6 core screens created with `ClinkNavGraph`.
+- **Environment & Build Verification**:
+  - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
+  - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
+  - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35 installed & verified).
+  - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, 17.98 MB APK generated).
+  - Unit Tests: `.\gradlew.bat test` verified (15 tests, 0 failures, 100% PASS).
+  - Static Analysis: `.\gradlew.bat lint` verified (SUCCESS, 0 errors).
