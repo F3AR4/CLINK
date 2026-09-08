@@ -11,11 +11,13 @@ import com.clink.app.domain.repository.PigRepository
 import com.clink.app.domain.repository.TransactionRepository
 
 /**
- * UseCase coordinating the business logic for adding money into a Pig.
- * - Validates input amount (must be > 0)
+ * UseCase coordinating the business logic for adding micro-savings into a Pig.
+ * - Validates input amount (must be > 0 paise)
+ * - Validates existence of Pig
+ * - Validates arithmetic overflow protection
  * - Invokes payment simulation
- * - Updates Pig balance atomically in repository
- * - Persists transaction record
+ * - Atomically persists Pig balance update and credit transaction in Room
+ * - Returns domain Result with completed Transaction
  */
 class AddMoneyUseCase(
     private val pigRepository: PigRepository,
@@ -28,29 +30,35 @@ class AddMoneyUseCase(
         note: String = "Added savings",
         method: PaymentMethod = PaymentMethod.SIMULATED_UPI
     ): Result<Transaction> {
+        // 1. Validation: Reject zero or negative amounts
         if (amount.paise <= 0) {
-            return Result.failure(IllegalArgumentException("Amount must be greater than zero paise"))
+            return Result.failure(IllegalArgumentException("Savings amount must be greater than zero paise"))
         }
 
+        // 2. Validate Pig exists
         val pig = pigRepository.getPigByIdOnce(pigId)
             ?: return Result.failure(IllegalArgumentException("Pig with ID $pigId not found"))
 
-        // Simulate payment processing
+        // 3. Overflow validation: ensure balance + amount does not overflow Long.MAX_VALUE
+        try {
+            pig.balance + amount
+        } catch (e: ArithmeticException) {
+            return Result.failure(e)
+        }
+
+        // 4. Simulate payment processing
         return when (val paymentResult = paymentRepository.processDeposit(pigId, amount, method)) {
             is PaymentResult.Success -> {
-                val newBalance = pig.balance + amount
-                pigRepository.updateBalance(pigId, newBalance)
-
-                val transaction = Transaction(
-                    pigId = pigId,
-                    amount = amount,
-                    type = TransactionType.CREDIT,
-                    status = TransactionStatus.COMPLETED,
-                    note = note,
-                    timestamp = System.currentTimeMillis()
-                )
-                val transactionId = transactionRepository.recordTransaction(transaction)
-                Result.success(transaction.copy(id = transactionId))
+                try {
+                    val transaction = pigRepository.addSavings(
+                        pigId = pigId,
+                        amount = amount,
+                        note = note
+                    )
+                    Result.success(transaction)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
             }
             is PaymentResult.Failure -> {
                 val failedTransaction = Transaction(

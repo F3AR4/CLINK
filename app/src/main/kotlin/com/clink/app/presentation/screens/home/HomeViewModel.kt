@@ -47,21 +47,7 @@ class HomeViewModel @Inject constructor(
 
     private fun ensureDefaultPig() {
         viewModelScope.launch {
-            val pigs = pigRepository.getAllPigs()
-            // We can initialize a primary pig if the database is newly created
-            launch {
-                pigRepository.getAllPigs().collect { currentPigs ->
-                    if (currentPigs.isEmpty()) {
-                        pigRepository.createPig(
-                            Pig(
-                                name = "Primary Pig",
-                                balance = Money.ZERO,
-                                targetAmount = Money.fromRupees(5000)
-                            )
-                        )
-                    }
-                }
-            }
+            pigRepository.getOrCreateDefaultPig()
         }
     }
 }

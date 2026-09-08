@@ -9,7 +9,7 @@
 
 ## Technical Debt & Placeholders
 1. **Screen UI is Placeholder**:
-   - Current screens are lightweight placeholders designed to validate navigation and ViewModel wiring. Production UI, coin animations, and playful visual micro-interactions will be built in subsequent tasks.
+   - Current screens are lightweight placeholders designed to validate navigation, local persistence, and ViewModel wiring. Production UI, coin animations, and playful visual micro-interactions will be built in subsequent tasks.
 2. **Room Database Destructive Migration**:
    - Currently configured with `.fallbackToDestructiveMigration()` in `DatabaseModule.kt` for early development velocity. Production migrations must be implemented once production schema stabilizes.
 3. **Single Pig Assumption in Sample Navigation**:

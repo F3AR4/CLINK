@@ -19,7 +19,9 @@ value class Money(val paise: Long) : Comparable<Money> {
         require(paise >= 0) { "Monetary amount cannot be negative: $paise paise" }
     }
 
-    operator fun plus(other: Money): Money = Money(this.paise + other.paise)
+    operator fun plus(other: Money): Money {
+        return Money(Math.addExact(this.paise, other.paise))
+    }
 
     operator fun minus(other: Money): Money {
         require(this.paise >= other.paise) {

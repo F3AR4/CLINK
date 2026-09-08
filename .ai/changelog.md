@@ -2,7 +2,26 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
-## [Unreleased] - Phase 1 Foundation
+## [Unreleased] - TASK-002: Core Local Savings Mechanics
+
+### Added
+- `Money.plus` arithmetic overflow protection using `Math.addExact`.
+- `PigDao.getPigCount()` and `PigDao.getFirstPig()` Room queries for idempotent pig initialization.
+- `PigRepository.addSavings()` atomic method executing balance update and transaction logging inside Room `database.withTransaction`.
+- `PigRepository.getOrCreateDefaultPig()` for safe, non-duplicating initial pig state on startup.
+- `SaveStatus` state machine (`Idle`, `Saving`, `Success`, `Error`) in `AddMoneyViewModel`.
+- Synchronous rapid double-tap guard in `AddMoneyViewModel.onAddMoney()`.
+- New unit test suites:
+  - `SavingsEnginePersistenceTest` (4 tests verifying atomicity, multiple consecutive saves, and reload persistence).
+  - `AddMoneyViewModelTest` (5 tests verifying state transitions and rapid double-tap prevention).
+  - Expanded `MoneyTest` and `AddMoneyUseCaseTest`.
+
+### Changed
+- `AddMoneyUseCase`: hardened to validate positive paise, pig existence, and arithmetic overflow before processing.
+- `HomeViewModel`: updated `ensureDefaultPig()` to call `pigRepository.getOrCreateDefaultPig()`.
+- Adaptive launcher icons restored with `-v26` resource directory qualifier for strict AAPT2 compatibility.
+
+## [TASK-001] - Phase 1 Foundation Bootstrap & Verification
 
 ### Added
 - Root Gradle Kotlin DSL build setup with `settings.gradle.kts` and `build.gradle.kts`.

@@ -69,4 +69,19 @@ class MoneyTest {
         assertThat(Money.RS_10).isLessThan(Money.RS_100)
         assertThat(Money.fromRupees(10)).isEqualTo(Money.RS_10)
     }
+
+    @Test
+    fun `zero paise is accepted and equals ZERO`() {
+        val zero = Money(0L)
+        assertThat(zero).isEqualTo(Money.ZERO)
+        assertThat(zero.paise).isEqualTo(0L)
+    }
+
+    @Test
+    fun `addition overflowing Long MAX_VALUE throws ArithmeticException`() {
+        val largeMoney = Money(Long.MAX_VALUE)
+        assertThrows(ArithmeticException::class.java) {
+            largeMoney + Money(1L)
+        }
+    }
 }

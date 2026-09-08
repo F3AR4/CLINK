@@ -15,4 +15,15 @@ interface PigRepository {
     suspend fun updatePig(pig: Pig)
     suspend fun updateBalance(pigId: Long, newBalance: Money)
     suspend fun deletePig(pigId: Long)
+
+    /**
+     * Atomically adds savings into the pig, updates the pig balance,
+     * and records the credit transaction record.
+     */
+    suspend fun addSavings(pigId: Long, amount: Money, note: String = "Added savings"): com.clink.app.domain.model.Transaction
+
+    /**
+     * Retrieves the primary/default Pig, or creates one if the database is newly initialized.
+     */
+    suspend fun getOrCreateDefaultPig(): Pig
 }

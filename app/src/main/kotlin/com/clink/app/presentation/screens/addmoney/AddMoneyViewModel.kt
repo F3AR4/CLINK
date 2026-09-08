@@ -15,11 +15,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface SaveStatus {
+    data object Idle : SaveStatus
+    data object Saving : SaveStatus
+    data object Success : SaveStatus
+    data class Error(val message: String) : SaveStatus
+}
+
 data class AddMoneyUiState(
     val selectedAmount: Money = Money.RS_10,
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
+    val saveStatus: SaveStatus = SaveStatus.Idle
+) {
+    val isLoading: Boolean get() = saveStatus is SaveStatus.Saving
+    val errorMessage: String? get() = (saveStatus as? SaveStatus.Error)?.message
+}
 
 sealed interface AddMoneyEvent {
     data object Success : AddMoneyEvent
@@ -41,26 +50,31 @@ class AddMoneyViewModel @Inject constructor(
     val events: SharedFlow<AddMoneyEvent> = _events.asSharedFlow()
 
     fun onSelectAmount(amount: Money) {
+        if (_uiState.value.isLoading) return
         _uiState.value = _uiState.value.copy(selectedAmount = amount)
     }
 
     fun onAddMoney() {
+        // Prevent duplicate rapid save taps while already processing
+        if (_uiState.value.isLoading) return
+        _uiState.value = _uiState.value.copy(saveStatus = SaveStatus.Saving)
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val result = addMoneyUseCase(
                 pigId = pigId,
                 amount = _uiState.value.selectedAmount,
                 note = "Clink savings"
             )
-            _uiState.value = _uiState.value.copy(isLoading = false)
 
             result.fold(
                 onSuccess = {
+                    _uiState.value = _uiState.value.copy(saveStatus = SaveStatus.Success)
                     _events.emit(AddMoneyEvent.Success)
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
-                    _events.emit(AddMoneyEvent.Error(error.message ?: "Failed to add money"))
+                    val msg = error.message ?: "Failed to add money"
+                    _uiState.value = _uiState.value.copy(saveStatus = SaveStatus.Error(msg))
+                    _events.emit(AddMoneyEvent.Error(msg))
                 }
             )
         }

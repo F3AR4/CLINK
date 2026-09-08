@@ -35,3 +35,37 @@
   7. Audited codebase for floating-point money leakages (verified 0 Double, Float only in UI progress and FAB).
   8. Audited codebase for security (0 secrets, 0 API keys).
 - **Status**: VERIFIED & PASSED
+
+## TASK-002: Core Local Savings Mechanics
+- **Date**: 2026-09-08
+- **Goal**: Implement and verify the core local savings engine of CLINK (offline, atomic, safe integer arithmetic).
+- **Actions Taken**:
+  1. Hardened `Money`: added overflow protection in `plus` using `Math.addExact` to prevent silent integer wraparound. Added tests for overflow and zero additions.
+  2. Extended `PigDao`: added `getPigCount()` and `getFirstPig()` to enable safe, single-pig initialization.
+  3. Implemented atomic persistence: added `addSavings(pigId, amount, note)` to `PigRepository` and `PigRepositoryImpl` utilizing Room's `database.withTransaction` (with configurable `transactionRunner` lambda for clean unit test execution).
+  4. Implemented idempotent initial pig state: added `getOrCreateDefaultPig()` in `PigRepository` and `PigRepositoryImpl`, ensuring fresh users have a default pig without creating duplicates on app restart.
+  5. Hardened `AddMoneyUseCase`:
+     - Added strict positive amount validation (`amount.paise > 0`).
+     - Added pig existence validation (`getPigByIdOnce`).
+     - Added arithmetic overflow validation before transaction.
+     - Delegated persistence to atomic `pigRepository.addSavings()`.
+     - Returns domain `Result<Transaction>` with clear errors.
+  6. Connected `AddMoneyViewModel`:
+     - Implemented `SaveStatus` state machine (`Idle`, `Saving`, `Success`, `Error`).
+     - Implemented synchronous double-tap suppression before coroutine launch to eliminate race conditions.
+  7. Connected `HomeViewModel`:
+     - Replaced inline pig creation collector with idempotent `pigRepository.getOrCreateDefaultPig()`.
+     - Observes Room changes reactively through `GetPigSummaryUseCase`.
+  8. Restored `-v26` qualifier on adaptive launcher icons (`app/src/main/res/mipmap-anydpi-v26/`) to comply with AAPT2 strict packaging rules.
+  9. Expanded Unit Test Suite to 30 tests (all passing):
+     - `MoneyTest`: 11 tests (added zero addition, overflow rejection).
+     - `AddMoneyUseCaseTest`: 7 tests (added standard denominations ₹10, ₹20, ₹50, ₹100, zero rejection, negative rejection, overflow rejection, pig not found, payment failure, repository error).
+     - `SavingsEnginePersistenceTest`: 4 tests (atomic save, multiple consecutive saves accumulating ₹0 -> ₹10 -> ₹30 -> ₹80, and repository reload across simulated restarts).
+     - `AddMoneyViewModelTest`: 5 tests (initial state, amount selection, successful save, failure handling, and rapid double-tap suppression).
+     - `FakePaymentRepositoryTest`: 3 tests.
+  10. Static Safety & Lint Verification:
+      - Confirmed 0 occurrences of financial `Double` or `Float`.
+      - Confirmed 0 production keys, API tokens, or real UPI integrations.
+      - Ran `.\gradlew.bat lint` -> BUILD SUCCESSFUL (0 errors).
+      - Ran `.\gradlew.bat assembleDebug` -> BUILD SUCCESSFUL (`app-debug.apk` created).
+- **Status**: COMPLETE & VERIFIED

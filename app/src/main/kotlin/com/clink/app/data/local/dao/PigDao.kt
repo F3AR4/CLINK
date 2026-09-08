@@ -19,6 +19,12 @@ interface PigDao {
     @Query("SELECT * FROM pigs WHERE id = :id")
     suspend fun getPigByIdOnce(id: Long): PigEntity?
 
+    @Query("SELECT COUNT(*) FROM pigs")
+    suspend fun getPigCount(): Int
+
+    @Query("SELECT * FROM pigs ORDER BY id ASC LIMIT 1")
+    suspend fun getFirstPig(): PigEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPig(pig: PigEntity): Long
 
