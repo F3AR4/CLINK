@@ -2,10 +2,11 @@
 
 ## Environment Status
 1. **Host Environment JDK & SDK Resolved**:
-   - Environment has Android Studio 2026.1.4, Android SDK at `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35 installed), and JDK 21 at `C:\Users\jowan\.jdks\jbr-21.0.11`.
+   - Environment has Android Studio 2026.1.4, Android SDK at `C:\Users\jowan\AppData\Local\Android\Sdk` (Platforms 35 and 37 installed), and JDK 21 at `C:\Users\jowan\.jdks\jbr-21.0.11`.
    - `gradle-wrapper.jar` was generated and `gradle.properties` created. CLI builds, tests, and lints execute cleanly.
-2. **No Active Emulator or Physical Device Connected**:
-   - `adb devices` shows no connected Android device or running emulator on the host. Live UI interaction was verified up to APK compilation and static validation; live on-device testing requires starting an emulator in Android Studio.
+2. **Android Emulator Configured & Runtime Verified**:
+   - `medium_phone` AVD created and verified on API 36 (`sdk_gphone64_x86_64`, Android 16).
+   - Live end-to-end smoke testing executed on device: fresh launch, savings flow (₹10, ₹20, ₹50), restart persistence, and rapid double-tap suppression all verified.
 
 ## Technical Debt & Placeholders
 1. **Screen UI is Placeholder**:

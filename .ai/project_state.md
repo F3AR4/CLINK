@@ -1,12 +1,12 @@
 # CLINK Current Project State
 
-- **Last Updated**: 2026-09-08
+- **Last Updated**: 2026-09-09
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-002: Core Local Savings Mechanics
-- **Status**: COMPLETE & VERIFIED (APK assembled, 30/30 unit tests passing, lint passing with 0 errors)
+- **Current Task**: TASK-002: Core Local Savings Mechanics (Final Runtime Verification)
+- **Status**: RUNTIME VERIFIED (APK assembled, 30/30 unit tests passing, lint 0 errors, live on-device smoke test PASS on API 36 emulator)
 
 ## Components Status
-- **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35; `assembleDebug` SUCCESS)
+- **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
 - **Git Version Control**: INITIALIZED & CLEAN
 - **Domain Layer**: VERIFIED (Pure Kotlin, zero UI/Room/Payment leaks, paise Long representation enforced, Math.addExact overflow protection)
   - Models: `Money`, `Pig`, `Transaction`, `Goal`, `User`
@@ -14,7 +14,7 @@
   - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`
 - **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization)
   - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao` (with `getPigCount`, `getFirstPig`), `TransactionDao`, `GoalDao`
-  - Database: `ClinkDatabase` (Room v1 schema generated in `app/schemas`)
+  - Database: `ClinkDatabase` (`clink.db`, Room v1)
   - Preferences: `UserPreferencesRepository` (DataStore)
   - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `FakePaymentRepository`
 - **Dependency Injection**: VERIFIED (Hilt 2.54 modules compile and inject dependencies)
@@ -23,12 +23,20 @@
   - Design System: `Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`
   - Components: `ClinkTopBar`, `MoneyDisplay`, `ClinkButton`, `QuickAmountChip`
   - Navigation: `Screen.kt`, `ClinkNavGraph.kt`
-  - Screens: `HomeScreen` (reactive to Room balance via `HomeViewModel`), `AddMoneyScreen` (connected to `AddMoneyViewModel` with `SaveStatus` state machine and rapid double-tap suppression), `OnboardingScreen`, `HistoryScreen`, `GoalScreen`, `PigDetailScreen`
+  - Screens: `HomeScreen` (reactive to Room balance via `HomeViewModel`), `AddMoneyScreen` (connected to `AddMoneyViewModel` with `SaveStatus` state machine and rapid double-tap suppression), `HistoryScreen` (displays transaction audit log), `OnboardingScreen`, `GoalScreen`, `PigDetailScreen`
 - **Application Entry Point**: VERIFIED (`ClinkApplication.kt`, `MainActivity.kt`, `AndroidManifest.xml`)
-- **Testing**: VERIFIED (30 tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Testing**: VERIFIED (30 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
   - `MoneyTest.kt` (11/11 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
   - `AddMoneyViewModelTest.kt` (5/5 pass)
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors)
+- **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
+  - App install & launch: SUCCESS
+  - Home screen initial balance: ₹0
+  - Sequential micro-savings: ₹10 -> ₹20 -> ₹50 (Final balance ₹80)
+  - App force-stop and restart: ₹80 preserved, zero duplicate pigs
+  - Rapid double-tap suppression: 5 rapid clicks registered exactly 1 transaction
+  - Transaction history audit: Exactly matched deposits
+  - Logcat audit: 0 application crashes, 0 SQLite/Room errors
