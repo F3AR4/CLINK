@@ -2,8 +2,8 @@
 
 - **Last Updated**: 2026-09-09
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-002: Core Local Savings Mechanics (Final Runtime Verification)
-- **Status**: RUNTIME VERIFIED (APK assembled, 30/30 unit tests passing, lint 0 errors, live on-device smoke test PASS on API 36 emulator)
+- **Current Task**: TASK-003: Design System + Branding
+- **Status**: COMPLETE & VERIFIED (APK assembled, 37/37 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -13,30 +13,47 @@
   - Repositories: `PigRepository` (with `addSavings` atomic method & `getOrCreateDefaultPig`), `TransactionRepository`, `GoalRepository`, `PaymentRepository`
   - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`
 - **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization)
-  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao` (with `getPigCount`, `getFirstPig`), `TransactionDao`, `GoalDao`
+  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao`, `GoalDao`
   - Database: `ClinkDatabase` (`clink.db`, Room v1)
   - Preferences: `UserPreferencesRepository` (DataStore)
   - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `FakePaymentRepository`
 - **Dependency Injection**: VERIFIED (Hilt 2.54 modules compile and inject dependencies)
   - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule`
-- **Presentation Layer**: VERIFIED (Compose Material 3 theme & connected local savings state)
-  - Design System: `Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`
-  - Components: `ClinkTopBar`, `MoneyDisplay`, `ClinkButton`, `QuickAmountChip`
-  - Navigation: `Screen.kt`, `ClinkNavGraph.kt`
-  - Screens: `HomeScreen` (reactive to Room balance via `HomeViewModel`), `AddMoneyScreen` (connected to `AddMoneyViewModel` with `SaveStatus` state machine and rapid double-tap suppression), `HistoryScreen` (displays transaction audit log), `OnboardingScreen`, `GoalScreen`, `PigDetailScreen`
-- **Application Entry Point**: VERIFIED (`ClinkApplication.kt`, `MainActivity.kt`, `AndroidManifest.xml`)
-- **Testing**: VERIFIED (30 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Presentation Layer**: VERIFIED (Material 3 CLINK Design System + Brand Identity)
+  - Design Tokens:
+    - Colors: Light and Dark semantic palette (`ClinkPink`, `ClinkNavy`, `ClinkTeal`, `CoinGold`, `PiggyBlush`, `SuccessGreen`, `ErrorRed`, accessible surface/background colors)
+    - Typography Scale: Display, Headline, Title, Body, Label
+    - Shapes: 8.dp (small), 12.dp (medium), 16.dp (large), 24.dp (extra-large), 32.dp (pill)
+    - Dimensions: Spacing (`none` to `xxxl`), icon sizes (`small`, `medium`, `large`), min touch target (48.dp), elevations
+    - Motion: Standard durations (`Fast`, `Normal`, `Slow`), easings, and spring specs
+  - Reusable Components:
+    - `MoneyDisplay`: Scaled currency symbol (₹) and fractional paise formatting
+    - `ClinkButton` & `ClinkOutlinedButton`: Accessible height, rounded pill shape, progress indicator loading state
+    - `ClinkTopBar`: Accessible 48dp navigation actions, brand header
+    - `ClinkCard`: Standardized surface with subtle border and elevation
+    - `ClinkAmountChip`: Accessible chip with active state border, checkmark, and animation
+    - `ClinkPigIllustration`: Compose-native vector mascot with coin slot and shiny gold coin
+    - `ClinkSectionHeader`: Section titles with optional action buttons
+    - `ClinkEmptyState`: Pig mascot empty state with call-to-action
+  - Screen Upgrades:
+    - `HomeScreen`: Hero savings card, pig mascot illustration, `PigListItem`, accessible FAB
+    - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA
+    - `HistoryScreen`: Transaction cards with credit pills (+₹) and timestamps, empty state
+    - `GoalScreen`: Goal progress cards and empty state
+- **Testing**: VERIFIED (37 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
   - `MoneyTest.kt` (11/11 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
   - `AddMoneyViewModelTest.kt` (5/5 pass)
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
-- **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors)
+  - `ClinkThemeTest.kt` (4/4 pass)
+  - `ClinkComponentsTest.kt` (3/3 pass)
+- **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
   - App install & launch: SUCCESS
-  - Home screen initial balance: ₹0
-  - Sequential micro-savings: ₹10 -> ₹20 -> ₹50 (Final balance ₹80)
-  - App force-stop and restart: ₹80 preserved, zero duplicate pigs
-  - Rapid double-tap suppression: 5 rapid clicks registered exactly 1 transaction
-  - Transaction history audit: Exactly matched deposits
-  - Logcat audit: 0 application crashes, 0 SQLite/Room errors
+  - Design system rendering in Light Mode: SUCCESS (Hero card, Mascot vector, quick chips, top bar)
+  - Sequential micro-savings: ₹100 -> ₹120 (balance and Room persistence verified)
+  - Transaction history screen: Rendered transactions in ClinkCards with credit badges
+  - Goals screen: Rendered ClinkEmptyState with mascot
+  - Dark Mode toggle: Verified contrast and dark theme surfaces via `cmd uimode night yes`
+  - Logcat audit: 0 application crashes, 0 ANRs

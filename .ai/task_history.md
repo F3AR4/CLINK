@@ -69,3 +69,41 @@
       - Ran `.\gradlew.bat lint` -> BUILD SUCCESSFUL (0 errors).
       - Ran `.\gradlew.bat assembleDebug` -> BUILD SUCCESSFUL (`app-debug.apk` created).
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-003: Design System + Branding
+- **Date**: 2026-09-09
+- **Goal**: Establish the complete Material 3 design system in Jetpack Compose, build reusable branded components, upgrade existing screens to use the design system, and verify both unit tests and live emulator runtime.
+- **Actions Taken**:
+  1. Implemented Centralized Tokens:
+     - `Dimensions.kt`: Spacing tokens (`spacingXxs` through `spacingXxxl`), icon sizes, `minTouchTarget` (48.dp), elevations, and `LocalDimensions` CompositionLocal.
+     - `Motion.kt`: Duration tokens (`DurationFast = 150`, `DurationNormal = 300`, `DurationSlow = 500`), easings, and spring specs.
+     - `Color.kt`: Extended palette with brand semantics for Light & Dark mode (`ClinkPink`, `ClinkNavy`, `ClinkTeal`, `CoinGold`, `PiggyBlush`, `SuccessGreen`, `ErrorRed`, surface and background tones).
+     - `Shape.kt`: Standardized M3 shapes (8.dp, 12.dp, 16.dp, 24.dp, 32.dp).
+     - `Type.kt`: Standardized typography scale with clear hierarchy.
+     - `Theme.kt`: Provided `ClinkTheme` binding `ColorScheme`, `LocalDimensions`, and system bar icons.
+  2. Created Reusable Components:
+     - `MoneyDisplay`: Scaled ₹ symbol and fractional paise styling.
+     - `ClinkButton` & `ClinkOutlinedButton`: Accessible 48dp+ height, rounded pill shape, progress indicator loading state.
+     - `ClinkTopBar`: Accessible navigation actions (min 48dp target) and brand title.
+     - `ClinkCard`: Standardized card surface with subtle outline and elevation.
+     - `ClinkAmountChip`: Accessible chip with active state border, checkmark, and spring animation.
+     - `ClinkPigIllustration`: Compose-native vector mascot with coin slot and shiny gold coin.
+     - `ClinkSectionHeader`: Standardized section headers with optional action links.
+     - `ClinkEmptyState`: Pig mascot illustration empty state with call-to-action button.
+  3. Upgraded Screens:
+     - `HomeScreen`: Hero savings card, pig mascot illustration, `PigListItem`, accessible FAB.
+     - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA.
+     - `HistoryScreen`: Transaction cards with credit pills (+₹) and timestamps, empty state.
+     - `GoalScreen`: Goal cards and empty state.
+  4. Testing & Verification:
+     - Added `ClinkThemeTest` (4 unit tests) and `ClinkComponentsTest` (3 unit tests) bringing total unit tests to 37.
+     - Ran `.\gradlew.bat test` -> 37/37 PASSED (0 failures, 0 errors).
+     - Ran `.\gradlew.bat lint` -> BUILD SUCCESSFUL (0 errors, 0 warnings).
+     - Ran `.\gradlew.bat assembleDebug` -> BUILD SUCCESSFUL.
+     - Installed and verified on live Android 16 emulator (`emulator-5554`):
+       - Light mode & Dark mode rendering.
+       - Savings flow: ₹100 -> ₹120 deposit.
+       - Transaction history audit.
+       - Clean logcat (0 crashes, 0 ANRs).
+- **Status**: COMPLETE & VERIFIED
+

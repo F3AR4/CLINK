@@ -23,3 +23,10 @@
 7. **Double-Tap Race Condition Prevention**:
    - Asynchronous checks in `viewModelScope.launch` leave a microtask window where multiple quick taps before the first coroutine suspension can invoke the use case multiple times.
    - Updating UI state to `SaveStatus.Saving` synchronously on the main thread inside `onAddMoney()` prior to launching the coroutine guarantees rapid taps are immediately rejected.
+8. **Android Adaptive Icons Resource Folder Placement**:
+   - In modern Android Gradle Plugin / AAPT2, adaptive launcher icon XML files require the `-v26` folder qualifier (`mipmap-anydpi-v26`).
+   - Renaming to `mipmap-anydpi` without the API qualifier causes resource linking failures during APK packaging. Instead, configure `lint` to disable the redundant `ObsoleteSdkInt` check.
+9. **Accessibility & Design Token Discipline**:
+   - All interactive components (buttons, chips, icon toggles) should guarantee a minimum touch target size of 48.dp (`LocalDimensions.current.minTouchTarget`).
+   - Typography `letterSpacing` in Compose takes `TextUnit` (e.g. `1.2.sp`) rather than raw floats or numeric arguments.
+   - Using `String.format(Locale.getDefault(), ...)` prevents lint `DefaultLocale` warnings while correctly formatting currency numbers according to user locale.

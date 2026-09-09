@@ -1,5 +1,57 @@
 # CLINK Testing History
 
+## TASK-003 Design System + Branding Test Record (2026-09-09)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **37/37 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `MoneyTest`: 11/11
+  - `AddMoneyUseCaseTest`: 7/7
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `AddMoneyViewModelTest`: 5/5
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4 (Theme token verification, contrast, spacing)
+  - `ClinkComponentsTest`: 3/3 (Chip denomination values, formatted strings, touch target contracts)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator
+1. **Design System & Components Rendering**:
+   - Branded Top Bar with pig mascot icon `CLINK 🐷` and accessible 48dp action touch targets.
+   - Hero Total Saved Card with bold currency symbol `₹`, integer paise formatting, and custom piggy mascot illustration.
+   - Branded `PigListItem` inside elevated `ClinkCard`.
+   - Result: **PASS**
+2. **Add Money Screen & Amount Chips Flow**:
+   - Tapped `Add Savings` FAB.
+   - Displayed interactive `ClinkAmountChip` grid: ₹10 (selected), ₹20, ₹50, ₹100.
+   - Tapped ₹20 chip -> Active outline, checkmark, and selected amount updated immediately.
+   - Tapped `Clink It! 🐷` button -> Saved ₹20.
+   - Home screen balance updated reactively to ₹120.
+   - Result: **PASS**
+3. **Transaction History Screen**:
+   - Tapped `Saving History` icon.
+   - Transactions rendered in elevated `ClinkCard`s with credit badge `+ ₹`, timestamp, and note.
+   - Result: **PASS**
+4. **Goals Screen**:
+   - Navigated to `Goals` screen.
+   - Rendered `ClinkEmptyState` with piggy mascot illustration and call to action.
+   - Result: **PASS**
+5. **Dark Mode Verification**:
+   - Switched system to night mode (`cmd uimode night yes`).
+   - Verified readable contrast, dark theme surfaces, and smooth rendering.
+   - Reverted night mode (`cmd uimode night no`).
+   - Result: **PASS**
+6. **Logcat & Stability Audit**:
+   - 0 crashes, 0 ANRs, 0 SQLite/Room errors, 0 runtime exceptions.
+   - Result: **PASS**
+
+---
+
 ## TASK-002 Live Runtime Smoke Test Record (2026-09-09)
 
 ### Environment

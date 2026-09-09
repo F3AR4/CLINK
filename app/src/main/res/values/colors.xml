@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="clink_pink">#E85D75</color>
     <color name="clink_navy">#172033</color>
-    <color name="clink_teal">#35B8A6</color>
-    <color name="clink_surface_light">#F8F9FA</color>
-    <color name="clink_surface_dark">#121826</color>
 </resources>

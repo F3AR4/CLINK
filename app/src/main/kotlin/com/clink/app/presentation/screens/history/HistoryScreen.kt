@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,7 +27,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,8 +37,11 @@ import androidx.lifecycle.viewModelScope
 import com.clink.app.domain.model.Transaction
 import com.clink.app.domain.model.TransactionType
 import com.clink.app.domain.repository.TransactionRepository
+import com.clink.app.presentation.components.ClinkCard
+import com.clink.app.presentation.components.ClinkEmptyState
 import com.clink.app.presentation.components.ClinkTopBar
 import com.clink.app.presentation.components.MoneyDisplay
+import com.clink.app.presentation.theme.ClinkDimens
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -79,28 +84,26 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = ClinkDimens.current.spacingLg)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
 
             if (transactions.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No savings recorded yet. Make your first clink!",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                ClinkEmptyState(
+                    title = "No savings recorded yet",
+                    description = "Every journey begins with a single clink! Tap Add Savings to start.",
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong
+                )
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(transactions, key = { it.id }) { tx ->
                         TransactionItem(transaction = tx)
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXxl))
                     }
                 }
             }
@@ -117,48 +120,63 @@ fun TransactionItem(transaction: Transaction) {
 
     val dateStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(transaction.timestamp))
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+    ClinkCard(
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        containerColor = MaterialTheme.colorScheme.surface,
+        elevation = ClinkDimens.current.elevationLevel1
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(ClinkDimens.current.spacingLg),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(MaterialTheme.shapes.small)
                     .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = iconColor)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(ClinkDimens.current.iconSm)
+                )
             }
 
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(ClinkDimens.current.spacingMd))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = transaction.note.ifEmpty { if (isCredit) "Savings Added" else "Withdrawal" },
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = dateStr,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            MoneyDisplay(
-                money = transaction.amount,
-                fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                color = if (isCredit) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (isCredit) "+ " else "- ",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isCredit) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+                )
+                MoneyDisplay(
+                    money = transaction.amount,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isCredit) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
