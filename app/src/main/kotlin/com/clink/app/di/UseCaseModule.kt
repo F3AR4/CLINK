@@ -94,6 +94,51 @@ object UseCaseModule {
     ): com.clink.app.domain.usecase.DeleteGoalUseCase {
         return com.clink.app.domain.usecase.DeleteGoalUseCase(goalRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideGetSelectedPigUseCase(
+        pigRepository: PigRepository,
+        userPreferencesRepository: UserPreferencesRepository
+    ): com.clink.app.domain.usecase.GetSelectedPigUseCase {
+        return com.clink.app.domain.usecase.GetSelectedPigUseCase(pigRepository, userPreferencesRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSelectPigUseCase(
+        pigRepository: PigRepository,
+        userPreferencesRepository: UserPreferencesRepository
+    ): com.clink.app.domain.usecase.SelectPigUseCase {
+        return com.clink.app.domain.usecase.SelectPigUseCase(pigRepository, userPreferencesRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCreatePigUseCase(
+        pigRepository: PigRepository,
+        userPreferencesRepository: UserPreferencesRepository
+    ): com.clink.app.domain.usecase.CreatePigUseCase {
+        return com.clink.app.domain.usecase.CreatePigUseCase(pigRepository, userPreferencesRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUpdatePigUseCase(
+        pigRepository: PigRepository
+    ): com.clink.app.domain.usecase.UpdatePigUseCase {
+        return com.clink.app.domain.usecase.UpdatePigUseCase(pigRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeletePigUseCase(
+        pigRepository: PigRepository,
+        userPreferencesRepository: UserPreferencesRepository
+    ): com.clink.app.domain.usecase.DeletePigUseCase {
+        return com.clink.app.domain.usecase.DeletePigUseCase(pigRepository, userPreferencesRepository)
+    }
 }
+
 
 

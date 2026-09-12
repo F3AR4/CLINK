@@ -49,4 +49,14 @@
   4. Deleting a goal has zero side effects on Pig balance or Transaction history.
   5. Deterministic active-first ordering: incomplete goals are presented first (sorted by `createdAt DESC`), followed by completed goals (`createdAt DESC`).
 - **Consequences**: Eliminates data drift and reconciliation bugs. Ensures zero floating-point monetary arithmetic and guarantees safe goal management.
-
+## ADR-012: Multi-Pig Architecture, Persistent Selection, and Financial Isolation
+- **Date**: 2026-09-12
+- **Status**: Accepted
+- **Context**: Transitioning CLINK from a single-pig implicit model (`pigId = 1L`) to a true multi-pig architecture supporting multiple savings pots (e.g., Emergency Fund, New Phone, Travel). Financial actions and domain state must guarantee complete isolation so that operations on one pig never leak to another.
+- **Decision**:
+  1. **Strict Financial Isolation**: Every saving operation, transaction record, and goal evaluation requires an explicit `pigId`. No implicit fallback or global balance mixing.
+  2. **Authoritative Balance**: Pig balance remains strictly authoritative on the `Pig` entity in 100% integer paise (`Long`). No duplicate balance caches.
+  3. **Persistent UI Selection via DataStore**: Active pig selection is persisted in `UserPreferencesRepository` under `active_pig_id`. Selection defaults to primary/default pig and reactively falls back to another surviving pig if the currently active pig is deleted.
+  4. **Delete Safety Protection**: Deletion requires at least 2 pigs to exist in the database. Deleting the last remaining pig is strictly forbidden, ensuring the application always possesses a valid active pig. Room's SQLite `CASCADE` handles associated transactions and goals.
+  5. **Explicit Presentation Routing**: Navigation routes (`AddMoneyRoute`, `GoalsRoute`, `HistoryRoute`, `PigDetailRoute`) accept explicit `pigId` arguments, ensuring UI views clearly state their target pig and target animation context.
+- **Consequences**: Zero cross-pig corruption, seamless reactive switching across screens, robust process-restart persistence, and zero floating-point currency math.

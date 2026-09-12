@@ -2,6 +2,7 @@ package com.clink.app.presentation.screens.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,13 +25,16 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,15 +51,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clink.app.domain.model.Money
+import com.clink.app.domain.model.Pig
 import com.clink.app.domain.model.PigState
 import com.clink.app.domain.model.Transaction
 import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
 import com.clink.app.presentation.components.ClinkEmptyState
+import com.clink.app.presentation.components.ClinkOutlinedButton
 import com.clink.app.presentation.components.ClinkPigIllustration
 import com.clink.app.presentation.components.ClinkSectionHeader
 import com.clink.app.presentation.components.ClinkTopBar
@@ -69,18 +78,19 @@ import java.util.Locale
 fun HomeScreen(
     onNavigateToAddMoney: (pigId: Long) -> Unit,
     onNavigateToHistory: (pigId: Long) -> Unit,
-    onNavigateToGoals: () -> Unit,
+    onNavigateToGoals: (pigId: Long) -> Unit,
     onNavigateToPigDetail: (pigId: Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val primaryPig = uiState.primaryPig
-    val primaryPigId = primaryPig?.id ?: 1L
-    val progression = primaryPig?.progression
-    val state = primaryPig?.state ?: PigState.NEW
+    val currentPig = uiState.selectedPig ?: uiState.primaryPig
+    val currentPigId = currentPig?.id ?: 1L
+    val progression = currentPig?.progression
+    val state = currentPig?.state ?: PigState.NEW
 
     var previousBalance by remember { mutableStateOf<Money?>(null) }
     var pigReactionTrigger by remember { mutableIntStateOf(0) }
+    var showCreatePigDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.totalBalance) {
         val prev = previousBalance
@@ -90,13 +100,23 @@ fun HomeScreen(
         previousBalance = uiState.totalBalance
     }
 
+    if (showCreatePigDialog) {
+        CreatePigDialog(
+            onDismiss = { showCreatePigDialog = false },
+            onConfirm = { name, targetAmount ->
+                viewModel.onCreatePig(name, targetAmount)
+                showCreatePigDialog = false
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             ClinkTopBar(
                 title = "CLINK 🐷",
                 actions = {
                     IconButton(
-                        onClick = onNavigateToGoals,
+                        onClick = { onNavigateToGoals(currentPigId) },
                         modifier = Modifier.size(ClinkDimens.current.minTouchTarget)
                     ) {
                         Icon(
@@ -106,7 +126,7 @@ fun HomeScreen(
                         )
                     }
                     IconButton(
-                        onClick = { onNavigateToHistory(primaryPigId) },
+                        onClick = { onNavigateToHistory(currentPigId) },
                         modifier = Modifier.size(ClinkDimens.current.minTouchTarget)
                     ) {
                         Icon(
@@ -120,7 +140,7 @@ fun HomeScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { onNavigateToAddMoney(primaryPigId) },
+                onClick = { onNavigateToAddMoney(currentPigId) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = MaterialTheme.shapes.medium,
@@ -154,13 +174,23 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
             }
 
+            // 0. Pig Selector Row
+            item {
+                PigSelectorRow(
+                    pigs = uiState.allPigs,
+                    selectedPigId = currentPigId,
+                    onSelectPig = { pigId -> viewModel.onSelectPig(pigId) },
+                    onNewPigClick = { showCreatePigDialog = true }
+                )
+            }
+
             // 1. Primary Pig Hero Card
             item {
                 ClinkCard(
                     shape = MaterialTheme.shapes.extraLarge,
                     containerColor = MaterialTheme.colorScheme.surface,
                     elevation = ClinkDimens.current.elevationLevel2,
-                    onClick = { onNavigateToPigDetail(primaryPigId) }
+                    onClick = { onNavigateToPigDetail(currentPigId) }
                 ) {
                     Column(
                         modifier = Modifier
@@ -181,7 +211,7 @@ fun HomeScreen(
                                     horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm)
                                 ) {
                                     Text(
-                                        text = (primaryPig?.name ?: "PRIMARY PIG").uppercase(Locale.getDefault()),
+                                        text = (currentPig?.name ?: "PRIMARY PIG").uppercase(Locale.getDefault()),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
@@ -333,7 +363,7 @@ fun HomeScreen(
             item {
                 ClinkButton(
                     text = if (state == PigState.NEW) "Save First ₹10 🐷" else "Save Money 🐷",
-                    onClick = { onNavigateToAddMoney(primaryPigId) },
+                    onClick = { onNavigateToAddMoney(currentPigId) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -349,7 +379,7 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium,
                         containerColor = MaterialTheme.colorScheme.surface,
                         elevation = ClinkDimens.current.elevationLevel1,
-                        onClick = { onNavigateToHistory(primaryPigId) }
+                        onClick = { onNavigateToHistory(currentPigId) }
                     ) {
                         Row(
                             modifier = Modifier
@@ -394,7 +424,7 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium,
                         containerColor = MaterialTheme.colorScheme.surface,
                         elevation = ClinkDimens.current.elevationLevel1,
-                        onClick = onNavigateToGoals
+                        onClick = { onNavigateToGoals(currentPigId) }
                     ) {
                         Row(
                             modifier = Modifier
@@ -443,7 +473,7 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium,
                         containerColor = MaterialTheme.colorScheme.surface,
                         elevation = ClinkDimens.current.elevationLevel1,
-                        onClick = onNavigateToGoals
+                        onClick = { onNavigateToGoals(currentPigId) }
                     ) {
                         Column(
                             modifier = Modifier
@@ -576,7 +606,7 @@ fun HomeScreen(
                     title = "Recent Activity",
                     subtitle = "Latest savings events",
                     actionText = if (uiState.recentTransactions.isNotEmpty()) "View All" else null,
-                    onActionClick = { onNavigateToHistory(primaryPigId) }
+                    onActionClick = { onNavigateToHistory(currentPigId) }
                 )
             }
 
@@ -612,7 +642,7 @@ fun HomeScreen(
                 items(uiState.recentTransactions, key = { it.id }) { tx ->
                     RecentTransactionItem(
                         transaction = tx,
-                        onClick = { onNavigateToHistory(primaryPigId) }
+                        onClick = { onNavigateToHistory(currentPigId) }
                     )
                 }
             }
@@ -622,6 +652,184 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+fun PigSelectorRow(
+    pigs: List<Pig>,
+    selectedPigId: Long,
+    onSelectPig: (Long) -> Unit,
+    onNewPigClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        items(pigs, key = { it.id }) { pig ->
+            val isSelected = pig.id == selectedPigId
+            Surface(
+                onClick = { onSelectPig(pig.id) },
+                shape = MaterialTheme.shapes.medium,
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                border = BorderStroke(
+                    width = if (isSelected) 2.dp else 1.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                ),
+                tonalElevation = if (isSelected) ClinkDimens.current.elevationLevel2 else ClinkDimens.current.elevationLevel0,
+                modifier = Modifier
+                    .height(48.dp)
+                    .semantics {
+                        contentDescription = "${pig.name}, ${if (isSelected) "selected" else "not selected"}, balance ${pig.balance.formatDisplay()}"
+                    }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = ClinkDimens.current.spacingMd),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingXs)
+                ) {
+                    Text(
+                        text = "🐷",
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = pig.name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                    )
+                    if (isSelected) {
+                        Text(
+                            text = "•",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = pig.balance.formatDisplay(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Surface(
+                onClick = onNewPigClick,
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier
+                    .height(48.dp)
+                    .semantics {
+                        contentDescription = "Create new pig"
+                    }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = ClinkDimens.current.spacingMd),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingXs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(ClinkDimens.current.iconSm)
+                    )
+                    Text(
+                        text = "New Pig",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CreatePigDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, targetAmount: Money?) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var targetText by remember { mutableStateOf("") }
+    var errorText by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "New Savings Pig 🐷",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingMd)
+            ) {
+                Text(
+                    text = "Give your new pig a name to keep its savings separate from your other goals.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        if (errorText != null) errorText = null
+                    },
+                    label = { Text("Pig Name (e.g. Emergency Fund)") },
+                    singleLine = true,
+                    isError = errorText != null,
+                    supportingText = errorText?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = targetText,
+                    onValueChange = { input ->
+                        if (input.all { it.isDigit() }) {
+                            targetText = input
+                        }
+                    },
+                    label = { Text("Target Amount in ₹ (Optional)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            ClinkButton(
+                text = "Create Pig",
+                onClick = {
+                    val trimmed = name.trim()
+                    if (trimmed.isEmpty()) {
+                        errorText = "Pig name cannot be empty"
+                    } else if (trimmed.length > 30) {
+                        errorText = "Pig name cannot exceed 30 characters"
+                    } else {
+                        val target = targetText.toLongOrNull()?.let { Money.fromRupees(it) }
+                        onConfirm(trimmed, target)
+                    }
+                }
+            )
+        },
+        dismissButton = {
+            ClinkOutlinedButton(
+                text = "Cancel",
+                onClick = onDismiss
+            )
+        }
+    )
 }
 
 @Composable
@@ -646,8 +854,8 @@ fun RecentTransactionItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -707,3 +915,4 @@ private fun formatRelativeTimestamp(timestamp: Long): String {
         else -> SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(timestamp))
     }
 }
+

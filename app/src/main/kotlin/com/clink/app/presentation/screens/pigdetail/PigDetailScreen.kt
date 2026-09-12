@@ -14,9 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,10 +44,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.clink.app.domain.model.GoalProgress
 import com.clink.app.domain.model.Money
 import com.clink.app.domain.model.Pig
 import com.clink.app.domain.model.PigState
 import com.clink.app.domain.repository.PigRepository
+import com.clink.app.domain.usecase.DeletePigUseCase
+import com.clink.app.domain.usecase.ObserveGoalsUseCase
+import com.clink.app.domain.usecase.UpdatePigUseCase
 import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
@@ -53,10 +64,9 @@ import com.clink.app.presentation.theme.ClinkDimens
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import com.clink.app.domain.model.GoalProgress
-import com.clink.app.domain.usecase.ObserveGoalsUseCase
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -64,9 +74,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PigDetailViewModel @Inject constructor(
-    pigRepository: PigRepository,
+    private val pigRepository: PigRepository,
     observeGoalsUseCase: ObserveGoalsUseCase,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val updatePigUseCase: UpdatePigUseCase? = null,
+    private val deletePigUseCase: DeletePigUseCase? = null
 ) : ViewModel() {
     private val pigId: Long = savedStateHandle.get<String>("pigId")?.toLongOrNull() ?: 1L
 
@@ -77,6 +89,14 @@ class PigDetailViewModel @Inject constructor(
             initialValue = null
         )
 
+    val canDelete: StateFlow<Boolean> = pigRepository.getAllPigs()
+        .map { it.size > 1 }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     val activeGoal: StateFlow<GoalProgress?> = observeGoalsUseCase(pigId)
         .map { goals -> goals.firstOrNull { !it.isCompleted } ?: goals.firstOrNull() }
         .stateIn(
@@ -84,6 +104,21 @@ class PigDetailViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+
+    fun renamePig(newName: String) {
+        viewModelScope.launch {
+            updatePigUseCase?.invoke(pigId = pigId, name = newName)
+        }
+    }
+
+    fun deletePig(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            val result = deletePigUseCase?.invoke(pigId)
+            if (result?.isSuccess == true) {
+                onDeleted()
+            }
+        }
+    }
 }
 
 @Composable
@@ -96,13 +131,66 @@ fun PigDetailScreen(
 ) {
     val pig by viewModel.pig.collectAsStateWithLifecycle()
     val activeGoal by viewModel.activeGoal.collectAsStateWithLifecycle()
+    val canDelete by viewModel.canDelete.collectAsStateWithLifecycle()
+
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showRenameDialog && pig != null) {
+        RenamePigDialog(
+            currentName = pig!!.name,
+            onDismiss = { showRenameDialog = false },
+            onConfirm = { newName ->
+                viewModel.renamePig(newName)
+                showRenameDialog = false
+            }
+        )
+    }
+
+    if (showDeleteDialog && pig != null) {
+        DeletePigDialog(
+            pigName = pig!!.name,
+            canDelete = canDelete,
+            onDismiss = { showDeleteDialog = false },
+            onConfirm = {
+                viewModel.deletePig {
+                    showDeleteDialog = false
+                    onNavigateBack()
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             ClinkTopBar(
                 title = pig?.name ?: "Piggy Bank",
                 canNavigateBack = true,
-                onNavigateBack = onNavigateBack
+                onNavigateBack = onNavigateBack,
+                actions = {
+                    if (pig != null) {
+                        IconButton(
+                            onClick = { showRenameDialog = true },
+                            modifier = Modifier.size(ClinkDimens.current.minTouchTarget)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Rename Pig",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        IconButton(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.size(ClinkDimens.current.minTouchTarget)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Pig",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -404,3 +492,121 @@ private fun DetailRow(
         )
     }
 }
+
+@Composable
+private fun RenamePigDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (newName: String) -> Unit
+) {
+    var name by remember { mutableStateOf(currentName) }
+    var errorText by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Rename Pig 🐷",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm)
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        if (errorText != null) errorText = null
+                    },
+                    label = { Text("Pig Name") },
+                    singleLine = true,
+                    isError = errorText != null,
+                    supportingText = errorText?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            ClinkButton(
+                text = "Save",
+                onClick = {
+                    val trimmed = name.trim()
+                    if (trimmed.isEmpty()) {
+                        errorText = "Pig name cannot be empty"
+                    } else if (trimmed.length > 30) {
+                        errorText = "Pig name cannot exceed 30 characters"
+                    } else {
+                        onConfirm(trimmed)
+                    }
+                }
+            )
+        },
+        dismissButton = {
+            ClinkOutlinedButton(
+                text = "Cancel",
+                onClick = onDismiss
+            )
+        }
+    )
+}
+
+@Composable
+private fun DeletePigDialog(
+    pigName: String,
+    canDelete: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (canDelete) "Delete Pig?" else "Cannot Delete Pig",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (canDelete) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            if (canDelete) {
+                Text(
+                    text = "Are you sure you want to delete \"$pigName\"? All associated savings history and goals for this pig will be permanently removed.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    text = "\"$pigName\" is your only savings pig. CLINK requires at least one active pig. To delete this pig, create another pig first.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            if (canDelete) {
+                ClinkButton(
+                    text = "Delete",
+                    onClick = onConfirm
+                )
+            } else {
+                ClinkButton(
+                    text = "OK",
+                    onClick = onDismiss
+                )
+            }
+        },
+        dismissButton = {
+            if (canDelete) {
+                ClinkOutlinedButton(
+                    text = "Cancel",
+                    onClick = onDismiss
+                )
+            }
+        }
+    )
+}
+

@@ -44,8 +44,8 @@ fun ClinkNavGraph(
                 onNavigateToHistory = { pigId ->
                     navController.navigate(Screen.History.createRoute(pigId))
                 },
-                onNavigateToGoals = {
-                    navController.navigate(Screen.Goals.route)
+                onNavigateToGoals = { pigId ->
+                    navController.navigate(Screen.Goals.createRoute(pigId))
                 },
                 onNavigateToPigDetail = { pigId ->
                     navController.navigate(Screen.PigDetail.createRoute(pigId))
@@ -82,11 +82,20 @@ fun ClinkNavGraph(
             )
         }
 
-        composable(Screen.Goals.route) {
+        composable(
+            route = Screen.Goals.route,
+            arguments = listOf(
+                navArgument("pigId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
             GoalScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCreateGoal = {
-                    navController.navigate(Screen.CreateGoal.createRoute())
+                onNavigateToCreateGoal = { pigId ->
+                    navController.navigate(Screen.CreateGoal.createRoute(pigId))
                 }
             )
         }
@@ -96,7 +105,8 @@ fun ClinkNavGraph(
             arguments = listOf(
                 navArgument("pigId") {
                     type = NavType.StringType
-                    defaultValue = "1"
+                    nullable = true
+                    defaultValue = null
                 }
             )
         ) {
@@ -122,7 +132,7 @@ fun ClinkNavGraph(
                     navController.navigate(Screen.History.createRoute(pigId))
                 },
                 onNavigateToGoals = {
-                    navController.navigate(Screen.Goals.route)
+                    navController.navigate(Screen.Goals.createRoute())
                 }
             )
         }

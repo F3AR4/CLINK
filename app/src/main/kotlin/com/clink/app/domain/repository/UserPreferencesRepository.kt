@@ -17,4 +17,16 @@ interface UserPreferencesRepository {
      * Returns [Result.success] on persistent write, or [Result.failure] if IO fails.
      */
     suspend fun setOnboardingCompleted(completed: Boolean): Result<Unit>
+
+    /**
+     * Observable stream of the currently selected active Pig ID.
+     * Emits null if no specific pig is selected.
+     */
+    val selectedPigId: Flow<Long?>
+
+    /**
+     * Persist the selected active Pig ID. Pass null to clear selection.
+     */
+    suspend fun setSelectedPigId(pigId: Long?): Result<Unit>
 }
+

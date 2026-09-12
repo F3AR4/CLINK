@@ -32,10 +32,9 @@ class ObserveGoalsUseCase(
 
         return combine(goalsFlow, pigsFlow) { goals, pigs ->
             val pigMap = pigs.associateBy { it.id }
-            val primaryPigBalance = pigs.firstOrNull()?.balance ?: Money.ZERO
 
             goals.map { goal ->
-                val balance = pigMap[goal.pigId]?.balance ?: primaryPigBalance
+                val balance = pigMap[goal.pigId]?.balance ?: Money.ZERO
                 GoalProgressCalculator.calculate(goal, balance)
             }.sortedWith(
                 compareBy<GoalProgress> { it.isCompleted } // false (active) before true (completed)

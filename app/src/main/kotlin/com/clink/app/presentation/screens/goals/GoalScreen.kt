@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -73,19 +74,39 @@ data class GoalsUiState(
 
 @HiltViewModel
 class GoalViewModel @Inject constructor(
-    observeGoalsUseCase: ObserveGoalsUseCase,
-    private val deleteGoalUseCase: DeleteGoalUseCase
+    private val observeGoalsUseCase: ObserveGoalsUseCase,
+    private val deleteGoalUseCase: DeleteGoalUseCase,
+    private val savedStateHandle: androidx.lifecycle.SavedStateHandle? = null,
+    private val getSelectedPigUseCase: com.clink.app.domain.usecase.GetSelectedPigUseCase? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GoalsUiState(isLoading = false))
     val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
 
-    val goals: StateFlow<List<GoalProgress>> = observeGoalsUseCase()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    val currentPigId: Long?
+        get() = savedStateHandle?.get<String>("pigId")?.toLongOrNull()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val goals: StateFlow<List<GoalProgress>> = run {
+        val explicitPigId = savedStateHandle?.get<String>("pigId")?.toLongOrNull()
+        if (explicitPigId != null) {
+            observeGoalsUseCase(explicitPigId)
+        } else if (getSelectedPigUseCase != null) {
+            getSelectedPigUseCase().flatMapLatest { pig ->
+                if (pig != null) {
+                    observeGoalsUseCase(pig.id)
+                } else {
+                    observeGoalsUseCase()
+                }
+            }
+        } else {
+            observeGoalsUseCase()
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     fun deleteGoal(goalId: Long) {
         viewModelScope.launch {
@@ -113,7 +134,7 @@ class GoalViewModel @Inject constructor(
 @Composable
 fun GoalScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToCreateGoal: () -> Unit,
+    onNavigateToCreateGoal: (Long?) -> Unit,
     viewModel: GoalViewModel = hiltViewModel()
 ) {
     val goals by viewModel.goals.collectAsStateWithLifecycle()
@@ -131,7 +152,7 @@ fun GoalScreen(
         floatingActionButton = {
             if (goals.isNotEmpty()) {
                 FloatingActionButton(
-                    onClick = onNavigateToCreateGoal,
+                    onClick = { onNavigateToCreateGoal(viewModel.currentPigId) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.semantics {
@@ -176,7 +197,7 @@ fun GoalScreen(
 
                         ClinkButton(
                             text = "Create Your First Goal 🎯",
-                            onClick = onNavigateToCreateGoal,
+                            onClick = { onNavigateToCreateGoal(viewModel.currentPigId) },
                             modifier = Modifier.fillMaxWidth(0.85f)
                         )
                     }

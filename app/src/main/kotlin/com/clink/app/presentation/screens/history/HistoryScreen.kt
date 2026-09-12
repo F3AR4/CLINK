@@ -55,7 +55,7 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             ClinkTopBar(
-                title = "Saving History",
+                title = uiState.pigName?.let { "History • $it" } ?: "Saving History",
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack
             )

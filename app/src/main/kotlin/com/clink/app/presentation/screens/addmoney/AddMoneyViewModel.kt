@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.clink.app.domain.model.Money
+import com.clink.app.domain.model.Pig
+import com.clink.app.domain.repository.PigRepository
 import com.clink.app.domain.usecase.AddMoneyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,7 +31,8 @@ data class AddMoneyUiState(
     val noteText: String = "",
     val validationError: String? = null,
     val savedAmount: Money? = null,
-    val saveStatus: SaveStatus = SaveStatus.Idle
+    val saveStatus: SaveStatus = SaveStatus.Idle,
+    val targetPig: Pig? = null
 ) {
     val isLoading: Boolean get() = saveStatus is SaveStatus.Saving
     val isProcessing: Boolean get() = saveStatus is SaveStatus.Saving || saveStatus is SaveStatus.Success
@@ -45,7 +48,8 @@ sealed interface AddMoneyEvent {
 @HiltViewModel
 class AddMoneyViewModel @Inject constructor(
     private val addMoneyUseCase: AddMoneyUseCase,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val pigRepository: PigRepository? = null
 ) : ViewModel() {
 
     private val pigId: Long = savedStateHandle.get<String>("pigId")?.toLongOrNull() ?: 1L
@@ -55,6 +59,16 @@ class AddMoneyViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<AddMoneyEvent>()
     val events: SharedFlow<AddMoneyEvent> = _events.asSharedFlow()
+
+    init {
+        pigRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.getPigById(pigId).collect { pig ->
+                    _uiState.value = _uiState.value.copy(targetPig = pig)
+                }
+            }
+        }
+    }
 
     fun onSelectAmount(amount: Money) {
         onSelectQuickAmount(amount)

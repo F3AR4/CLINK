@@ -46,7 +46,9 @@ class HomeViewModelTest {
         mockObserveGoalsUseCase = mockk(relaxed = true)
 
         coEvery { mockPigRepository.getAllPigs() } returns pigsFlow
+        every { mockGetTransactionsUseCase(any()) } returns transactionsFlow
         every { mockGetTransactionsUseCase() } returns transactionsFlow
+        every { mockObserveGoalsUseCase(any()) } returns MutableStateFlow(emptyList())
         every { mockObserveGoalsUseCase() } returns MutableStateFlow(emptyList())
     }
 
@@ -147,5 +149,45 @@ class HomeViewModelTest {
         val state = viewModel.uiState.value
         assertThat(state.primaryPig?.state).isEqualTo(PigState.FULL)
         assertThat(state.primaryPig?.progression?.nextThreshold).isNull()
+    }
+
+    @Test
+    fun `onSelectPig triggers selectPigUseCase`() = runTest {
+        val mockSelectPigUseCase: com.clink.app.domain.usecase.SelectPigUseCase = mockk(relaxed = true)
+        val viewModel = HomeViewModel(
+            pigRepository = mockPigRepository,
+            getTransactionsUseCase = mockGetTransactionsUseCase,
+            observeGoalsUseCase = mockObserveGoalsUseCase,
+            selectPigUseCase = mockSelectPigUseCase
+        )
+
+        viewModel.onSelectPig(2L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        io.mockk.coVerify { mockSelectPigUseCase(2L) }
+    }
+
+    @Test
+    fun `onCreatePig triggers createPigUseCase`() = runTest {
+        val mockCreatePigUseCase: com.clink.app.domain.usecase.CreatePigUseCase = mockk()
+        val targetAmount = Money.fromRupees(500)
+        coEvery {
+            mockCreatePigUseCase(
+                name = "Emergency Fund",
+                targetAmount = targetAmount
+            )
+        } returns Result.success(Pig(id = 2L, name = "Emergency Fund"))
+
+        val viewModel = HomeViewModel(
+            pigRepository = mockPigRepository,
+            getTransactionsUseCase = mockGetTransactionsUseCase,
+            observeGoalsUseCase = mockObserveGoalsUseCase,
+            createPigUseCase = mockCreatePigUseCase
+        )
+
+        viewModel.onCreatePig("Emergency Fund", targetAmount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        io.mockk.coVerify { mockCreatePigUseCase(name = "Emergency Fund", targetAmount = targetAmount) }
     }
 }

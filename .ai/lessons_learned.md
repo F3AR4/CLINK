@@ -71,5 +71,18 @@
 22. **Presentation-Layer Animation Isolation & Coordinate Mapping**:
    - Animations must never mutate or substitute domain models; visual counters (`AnimatedMoneyDisplay`) animate purely presentation floats while strictly settling on authoritative `money.paise`.
    - Layout-aware coordinates should be captured reactively via `onGloballyPositioned` with relative window offset calculations rather than hardcoded device coordinates, ensuring animation paths adapt dynamically to arbitrary screen densities and orientations.
+23. **Multi-Pig Financial Isolation via Explicit Scope**:
+   - Passing an optional or null `pigId` parameter leads to accidental leakage or defaulting to primary pig across screens.
+   - Requiring explicit `pigId` in repository contracts, use cases, view models, and navigation routes guarantees that transactions, history, and goals operate exclusively on their designated savings vessel.
+24. **Sole-Pig Deletion Safety Invariant**:
+   - Allowing users to delete the last remaining pig leaves the app in an invalid orphan state (e.g. Home screen displaying empty/null balance with nowhere to save).
+   - Enforcing delete safety in domain (`DeletePigUseCase`) and presentation (`DeletePigDialog` block) guarantees that at least one pig always exists, preserving system invariants.
+25. **DataStore Selection Fallback Pattern**:
+   - When an active pig is deleted or if `selectedPigId` preference points to a non-existent ID, `GetSelectedPigUseCase` reactively resolves to the first/primary surviving pig and updates DataStore.
+   - This ensures the UI never crashes or stalls on a stale foreign key.
+26. **Software Keyboard Geometry Displacement in Compose Dialogs**:
+   - When an `AlertDialog` with a `TextField` opens and gains focus on Android, the IME pushes the dialog and its action buttons upward.
+   - When automating UI interactions with coordinate taps, coordinates must account for the displaced dialog position or dismiss the keyboard (`adb shell input keyevent 4`) prior to tapping dialog action buttons.
+
 
 

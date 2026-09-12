@@ -53,6 +53,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clink.app.domain.model.Money
+import com.clink.app.domain.model.PigState
 import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkAmountChip
 import com.clink.app.presentation.components.ClinkButton
@@ -104,7 +105,7 @@ fun AddMoneyScreen(
     Scaffold(
         topBar = {
             ClinkTopBar(
-                title = "Add to CLINK",
+                title = uiState.targetPig?.let { "Add to ${it.name}" } ?: "Add to CLINK",
                 canNavigateBack = true,
                 onNavigateBack = {
                     if (!isAnimationActive) onNavigateBack()
@@ -129,9 +130,10 @@ fun AddMoneyScreen(
             ) {
                 Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
 
-                // Piggy mascot banner with presentation reaction trigger
+                // Piggy mascot banner with presentation reaction trigger and target pig state
                 ClinkPigIllustration(
                     size = 80.dp,
+                    state = uiState.targetPig?.state ?: PigState.NEW,
                     reactionTrigger = pigReactionTrigger,
                     modifier = Modifier.onGloballyPositioned { pigCoordinates = it }
                 )
@@ -139,17 +141,17 @@ fun AddMoneyScreen(
                 Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
 
                 Text(
-                    text = "Feed your Piggy",
+                    text = uiState.targetPig?.let { "Saving to ${it.name}" } ?: "Feed your Piggy",
                     style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-            Text(
-                text = "Small micro-savings make big habits.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Text(
+                    text = "Small micro-savings make big habits.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
             Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
 

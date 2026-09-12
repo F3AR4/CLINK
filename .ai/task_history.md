@@ -425,4 +425,43 @@
      - Scenario P (Logcat audit): `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E FATAL:E` verified 0 fatal exceptions and 0 runtime errors.
 - **Status**: COMPLETE & VERIFIED
 
-
+## TASK-012: Multi-Pig Architecture
+- **Date**: 2026-09-12
+- **Goal**: Transform CLINK from single-primary-pig assumption into a true multi-pig architecture with independent balances, transactions, and goals, safe CRUD, persistent pig selection via DataStore, explicit savings routing, delete safety, and complete financial isolation.
+- **Actions Taken**:
+  1. DataStore Preferences: Added `selectedPigId` Flow and `setSelectedPigId(pigId: Long)` to `UserPreferencesRepository` under key `active_pig_id`.
+  2. Domain Layer:
+     - Implemented `CreatePigUseCase`: validates pig name (non-empty, max 30 chars), creates new Pig, sets default target amount, and persists new pig as the selected pig.
+     - Implemented `GetSelectedPigUseCase`: reactively emits the active pig based on DataStore `selectedPigId`, seamlessly falling back to the primary/first pig.
+     - Implemented `SelectPigUseCase`: persists active pig ID in DataStore preferences.
+     - Implemented `UpdatePigUseCase`: renames pig and updates timestamp.
+     - Implemented `DeletePigUseCase`: enforces delete safety (prohibits deleting the only remaining pig; cascades deletion of transactions and goals via Room foreign keys; falls back active pig selection to another surviving pig).
+     - Updated `ObserveGoalsUseCase`: dynamically scopes goal observation by optional `pigId` and derives progress strictly from the authoritative balance of `goal.pigId`.
+  3. Presentation Layer:
+     - Created `PigSelectorRow`: horizontal scrolling chips on `HomeScreen` displaying all pigs, current balance for selected pig, selected highlight styling, and a "+ New Pig" action button.
+     - Created `CreatePigDialog`: clean dialog for naming and setting optional targets.
+     - Created `RenamePigDialog` and `DeletePigDialog`: dialogs on `PigDetailScreen` supporting pig renaming and safe deletion with cascade warning.
+     - Navigation & Routing: Updated `ClinkNavGraph` and `Screen` routes (`AddMoney/{pigId}`, `History/{pigId}`, `Goals?pigId={pigId}`, `CreateGoal?pigId={pigId}`, `PigDetail/{pigId}`) to explicitly pass and enforce `pigId`.
+     - `AddMoneyScreen`: Displays explicit "Saving to <Pig Name>" and routes savings via `AddMoneyUseCase(pigId, amount, note)` directly to the designated pig.
+  4. Testing:
+     - Added `MultiPigIsolationTest`: 4 comprehensive unit tests verifying savings balance isolation between Pig A and Pig B, transaction history isolation, goal progress isolation, and DataStore selection persistence.
+     - Added `PigCrudUseCaseTest`: 8 unit tests covering pig creation, rename update, delete safety preventing sole pig deletion, automatic fallback selection upon deletion, and reactive active pig resolution.
+     - Updated `HomeViewModelTest`: 2 unit tests verifying multi-pig reactive state emission and pig selection callbacks.
+     - Total project tests increased from 150 to 164 across 32 test classes (100% passing).
+  5. Build & Lint:
+     - `assembleDebug`: PASS.
+     - `lintDebug`: PASS, 0 errors, 0 warnings.
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36) across Scenarios A-AE:
+     - Scenarios A-E: Verified default pig, created "Emergency Fund" and "New Phone", verified 3 pigs total in `PigSelectorRow`.
+     - Scenarios F-K: Selected Pig A, saved ₹20 -> Pig A increased, Pig B remained unchanged. Selected Pig B, saved ₹50 -> Pig B increased, Pig A remained unchanged. Independent balances verified.
+     - Scenarios L-O: Opened Pig Detail for both pigs; verified independent balances and transaction histories (Pig A showed only +₹20, Pig B showed only +₹50).
+     - Scenarios P-R: Created goal "Phone Case" for Pig B; saved ₹10 to Pig B completing its goal -> Pig A goal/balance completely unaffected.
+     - Scenario S: Renamed Pig A to "Safety Net".
+     - Scenarios T-U: Relaunched app; verified selected pig persistence in DataStore across process death.
+     - Scenarios V-W: Deleted "Safety Net"; confirmation dialog warned of cascade; surviving pig became active.
+     - Scenario X: Attempted primary pig deletion -> deleted successfully and fell back to surviving pig; attempted deletion when only 1 pig remained -> blocked with "Cannot Delete Pig" safety dialog.
+     - Scenarios Y-Z: Verified Add Money screen displays explicit destination "Saving to <Pig Name>", coin flight targets correct pig.
+     - Scenarios AA-AB: Verified Light mode and Dark mode visual fidelity and contrast.
+     - Scenarios AC-AD: Verified rapid chip switching between multiple pigs and reactive home updates.
+     - Scenario AE: Logcat audit verified 0 uncaught exceptions or errors.
+- **Status**: COMPLETE & VERIFIED

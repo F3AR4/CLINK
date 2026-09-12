@@ -2,7 +2,36 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-012] - Multi-Pig Architecture
+
+### Added
+- Data Layer:
+  - `UserPreferencesRepository`: Added `selectedPigId: Flow<Long?>` and `setSelectedPigId(pigId: Long)` backed by DataStore preferences under key `active_pig_id`.
+- Domain Layer:
+  - `CreatePigUseCase`: Creates new Pig with validated name (trimmed, 1..30 chars), optional target amount, default visual metadata, and automatically sets the new pig as the selected pig.
+  - `GetSelectedPigUseCase`: Reactively emits the active pig based on DataStore `selectedPigId`, seamlessly falling back to the primary/first pig if selection is null or refers to a deleted pig.
+  - `SelectPigUseCase`: Persists user's active pig selection in DataStore preferences.
+  - `UpdatePigUseCase`: Updates pig name and timestamp.
+  - `DeletePigUseCase`: Enforces delete safety by forbidding deletion of the last remaining pig; relies on Room SQLite CASCADE foreign keys to clean up related transactions and goals; safely falls back `selectedPigId` to another surviving pig.
+  - `ObserveGoalsUseCase`: Updated to support optional `pigId` parameter for pig-scoped goal observation, calculating progress dynamically based strictly on the matching pig's authoritative balance.
+- Presentation Layer:
+  - `PigSelectorRow`: Horizontal scrollable row on `HomeScreen` displaying all pigs as interactive chips with active badge styling, current balance display, and a "+ New Pig" action chip.
+  - `CreatePigDialog`: Accessible dialog for naming and setting optional targets for a new pig.
+  - `RenamePigDialog` & `DeletePigDialog`: Modals on `PigDetailScreen` for renaming and safely deleting pigs with confirmation and cascade warnings.
+  - Explicit Pig Routing:
+    - `AddMoneyScreen` and `AddMoneyViewModel`: Require explicit `pigId`, clearly announce destination ("Saving to <Pig Name>"), and route savings to the specified pig.
+    - `ClinkNavGraph`: Navigation routes now accept explicit `pigId` parameters (`AddMoney/{pigId}`, `History/{pigId}`, `Goals?pigId={pigId}`, `CreateGoal?pigId={pigId}`, `PigDetail/{pigId}`).
+    - `HistoryViewModel` & `GoalViewModel`: Scope transactions and goals strictly to explicit or selected `pigId`.
+- Testing:
+  - `MultiPigIsolationTest`: 4 unit tests verifying savings isolation, transaction isolation, goal progress isolation, and selection persistence across multiple pigs.
+  - `PigCrudUseCaseTest`: 8 unit tests verifying pig creation, rename update, delete safety preventing sole pig deletion, automatic fallback selection upon deletion, and reactive active pig resolution.
+  - `HomeViewModelTest`: 2 unit tests verifying multi-pig reactive state emission and pig selection callbacks.
+  - Total project unit tests increased from 150 to 164 across 32 test classes (100% passing).
+- Runtime Verification:
+  - Verified on Android 16 / API 36 emulator (`emulator-5554`) across all 31 runtime scenarios (A through AE): fresh launch, multi-pig creation, savings isolation, transaction isolation, goal isolation, rename, process restart persistence, non-primary deletion, primary pig deletion safety, explicit Add Money targeting, animation integrity, light/dark mode, rapid switching, and clean logcat audit.
+
 ## [TASK-011] - CLINK Coin + Pig Animation System
+
 
 ### Added
 - Motion & Design Tokens:

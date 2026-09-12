@@ -60,6 +60,18 @@ class UserPreferencesRepository @Inject constructor(
             )
         }
 
+    override val selectedPigId: Flow<Long?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.ACTIVE_PIG_ID]
+        }
+
     override suspend fun setOnboardingCompleted(completed: Boolean): Result<Unit> {
         return runCatching {
             dataStore.edit { preferences ->
@@ -69,12 +81,19 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
-    suspend fun setActivePigId(pigId: Long): Result<Unit> {
+    override suspend fun setSelectedPigId(pigId: Long?): Result<Unit> {
         return runCatching {
             dataStore.edit { preferences ->
-                preferences[PreferencesKeys.ACTIVE_PIG_ID] = pigId
+                if (pigId != null) {
+                    preferences[PreferencesKeys.ACTIVE_PIG_ID] = pigId
+                } else {
+                    preferences.remove(PreferencesKeys.ACTIVE_PIG_ID)
+                }
             }
             Unit
         }
     }
+
+    suspend fun setActivePigId(pigId: Long): Result<Unit> = setSelectedPigId(pigId)
 }
+

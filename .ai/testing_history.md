@@ -1,6 +1,62 @@
 # CLINK Testing History
- 
+
+## TASK-012 Multi-Pig Architecture Test Record (2026-09-12)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **164/164 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 32 test suites)
+  - Baseline from TASK-011: **150 tests**
+  - Added in TASK-012: **+14 tests**:
+    - `MultiPigIsolationTest`: 4 tests (`saving to Pig A does not change Pig B balance`, `saving to Pig A records transaction with pigId A and none for B`, `saving to Pig A completes goal for Pig A without progressing Pig B goal`, `selected pig id persists in preferences`)
+    - `PigCrudUseCaseTest`: 8 tests (`createPig inserts new pig and selects it`, `createPig with blank name fails`, `updatePig updates name successfully`, `deletePig succeeds when more than one pig exists`, `deletePig fails when only one pig exists`, `deletePig reselects fallback pig when deleted pig was selected`, `getSelectedPig emits selected pig`, `getSelectedPig falls back to first pig when selected is null or deleted`)
+    - `HomeViewModelTest`: 2 tests (`uiState reflects active pig from getSelectedPigUseCase`, `onSelectPig delegates to selectPigUseCase`)
+  - Total verified test suite: **164/164 PASS**
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`, API 36)
+1. **Scenario A (Fresh launch)**: App launched cleanly, displaying default pig. (PASS)
+2. **Scenario B (Default pig exists)**: Verified initial pig presence and non-duplicate initialization. (PASS)
+3. **Scenario C (Create Pig A "Emergency Fund")**: Created Pig A via "+ New Pig" dialog -> appeared in selector row. (PASS)
+4. **Scenario D (Create Pig B "New Phone")**: Created Pig B via dialog -> appeared in selector row. (PASS)
+5. **Scenario E (Total pigs in selector)**: Verified all pigs visible in selector row chips with active indicators. (PASS)
+6. **Scenario F (Select Pig A)**: Tapped Pig A chip -> Home reactively switched to Pig A. (PASS)
+7. **Scenario G (Save ₹20 to Pig A)**: Add Money showed "Saving to Emergency Fund" -> saved ₹20 -> balance became ₹20. (PASS)
+8. **Scenario H (Pig A balance isolation)**: Verified only Pig A increased by ₹20; other pigs untouched. (PASS)
+9. **Scenario I (Select Pig B)**: Switched to Pig B -> Home reactively loaded Pig B with ₹0 balance. (PASS)
+10. **Scenario J (Save ₹50 to Pig B)**: Add Money showed "Saving to New Phone" -> saved ₹50 -> balance became ₹50. (PASS)
+11. **Scenario K (Pig B balance isolation)**: Verified Pig B increased to ₹50; Pig A remained at ₹20. (PASS)
+12. **Scenario L (Pig A Detail)**: Opened Pig A Detail -> showed ₹20 balance, status, and summary. (PASS)
+13. **Scenario M (Pig B Detail)**: Opened Pig B Detail -> showed ₹50 balance, status, and summary. (PASS)
+14. **Scenario N (Independent balances verified)**: Both pigs maintain strictly isolated balances in Room. (PASS)
+15. **Scenario O (Independent histories verified)**: Pig A History contained only +₹20; Pig B History contained only +₹50. (PASS)
+16. **Scenario P (Create goal for Pig B)**: Created goal "Phone Case" (₹60 target) for Pig B (balance ₹50). (PASS)
+17. **Scenario Q (Save to complete Pig B goal)**: Saved ₹10 to Pig B -> balance ₹60 -> goal marked 100% Completed 🎉. (PASS)
+18. **Scenario R (Goal isolation verified)**: Pig A goal & balance completely unaffected by Pig B progress. (PASS)
+19. **Scenario S (Rename Pig A)**: Renamed Pig A from "Emergency Fund" to "Safety Net" -> updated immediately. (PASS)
+20. **Scenario T (Restart app)**: Force-stopped app and restarted. (PASS)
+21. **Scenario U (Selection persistence verified)**: Active pig selection persisted in DataStore across process restart. (PASS)
+22. **Scenario V (Delete non-primary pig)**: Deleted "Safety Net" -> confirmation dialog displayed cascade warning -> deleted safely. (PASS)
+23. **Scenario W (Post-delete navigation & fallback)**: App seamlessly fell back active selection to surviving pig. (PASS)
+24. **Scenario X (Primary-pig deletion behavior & sole-pig safety)**: Deleted primary pig -> fell back to surviving pig; when only 1 pig remained, tapped delete -> blocked with "Cannot Delete Pig: CLINK requires at least one active pig. To delete this pig, create another pig first." (PASS)
+25. **Scenario Y (Explicit Add Money target)**: Add Money screen clearly announces "Saving to <Pig Name>". (PASS)
+26. **Scenario Z (Animation targeting)**: Coin flight and squash-and-stretch bounce belong strictly to the target pig. (PASS)
+27. **Scenario AA (Light mode)**: All multi-pig elements render with crisp contrast in light mode. (PASS)
+28. **Scenario AB (Dark mode)**: Deep navy background, glowing gold tokens, and high contrast chips in night mode. (PASS)
+29. **Scenario AC (Rapid taps)**: Rapidly toggled between pig chips in `PigSelectorRow` -> smooth reactive updates with zero recomposition glitches. (PASS)
+30. **Scenario AD (Multi-pig list)**: Supported multiple pigs with horizontal scrolling LazyRow. (PASS)
+31. **Scenario AE (Logcat audit)**: `adb logcat -d -s AndroidRuntime:E Clink:V` verified 0 exceptions, 0 errors, 0 crashes. (PASS)
+
 ## TASK-011 CLINK Coin + Pig Animation System Test Record (2026-09-12)
+
  
 ### Environment
 - **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,7 +44,8 @@ sealed interface CreateGoalEvent {
 @HiltViewModel
 class CreateGoalViewModel @Inject constructor(
     private val createGoalUseCase: CreateGoalUseCase,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val getSelectedPigUseCase: com.clink.app.domain.usecase.GetSelectedPigUseCase? = null
 ) : ViewModel() {
 
     private val pigId: Long = savedStateHandle.get<String>("pigId")?.toLongOrNull() ?: 1L
@@ -127,8 +129,12 @@ class CreateGoalViewModel @Inject constructor(
         _uiState.value = state.copy(status = CreateGoalStatus.Creating)
 
         viewModelScope.launch {
+            val targetPigId = savedStateHandle.get<String>("pigId")?.toLongOrNull()
+                ?: getSelectedPigUseCase?.invoke()?.firstOrNull()?.id
+                ?: pigId
+
             val result = createGoalUseCase(
-                pigId = pigId,
+                pigId = targetPigId,
                 title = titleToSave,
                 targetAmount = state.targetAmount
             )

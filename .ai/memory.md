@@ -22,31 +22,29 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-011 Complete)
+## 4. Current State (TASK-012 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
 - First-launch Onboarding & Persistent User State implemented & verified.
-- Pig Engine + Single Pig Progression implemented & verified.
+- Pig Engine + Multi-Pig Architecture implemented & verified:
+  - Full CRUD operations: `CreatePigUseCase`, `GetSelectedPigUseCase`, `SelectPigUseCase`, `UpdatePigUseCase`, `DeletePigUseCase`.
+  - Financial isolation: Every pig maintains strictly independent balances, transactions, and goals.
+  - Delete safety: Deletion of the sole remaining pig is prohibited; deleting an active pig cascades deletion in SQLite and falls back selection cleanly to a surviving pig.
+  - Active selection persistence: Stored in DataStore preferences (`active_pig_id`), surviving process death and cold launches.
+  - Presentation: `PigSelectorRow` on `HomeScreen`, `PigDetailScreen` management (rename & safe delete), explicit `pigId` routing across all screens (`AddMoneyScreen`, `HistoryScreen`, `GoalScreen`, `CreateGoalScreen`).
 - Transaction Engine hardened and verified with atomic consistency.
-- Home Dashboard polished as central everyday savings experience.
-- Add Money Experience polished as primary micro-saving action with quick chips, custom input, and real-time validation.
-- Goals Engine fully implemented and runtime verified.
-- History + Transaction UI polished and runtime verified.
-- CLINK Coin + Pig Animation System fully implemented and runtime verified:
-  - Tokens: `DurationFlight`, `DurationReaction`, `DurationCelebration`, `FlightEasing`, `CoinGoldDark`, `CoinGoldRim`.
-  - Presentation Components: `ClinkSavingsToken`, `ClinkCelebrationBadge`, `AnimatedMoneyDisplay`, `ClinkPigIllustration` (squash-and-stretch bounce), `ClinkSavingsAnimation` (4-phase flight orchestrator).
-  - Screen Integrations: `AddMoneyScreen` (coin flight, bounce, badge, button lockout, smooth exit), `HomeScreen` and `PigDetailScreen` (interpolating counter, reactive bounce).
-  - Strictly isolated presentation layer; zero Domain/Room/SQLite awareness or mutations.
-  - Zero Float/Double currency conversions; `Money` / `Long` paise remains authoritative.
+- Goals Engine scoped per pig with derived progress from authoritative pig balances.
+- CLINK Coin + Pig Animation System verified across multiple pigs with target-aware animations.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat test` verified (150 tests across 30 test classes, 0 failures, 100% PASS; baseline from TASK-010 was 143 tests + 7 tests added in TASK-011).
+  - Unit Tests: `.\gradlew.bat test` verified (164 tests across 33 test classes, 0 failures, 100% PASS; baseline from TASK-011 was 150 tests + 14 tests added in TASK-012).
   - Static Analysis: `.\gradlew.bat lintDebug` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-P verified.
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-AE verified.
+
 
 
 
