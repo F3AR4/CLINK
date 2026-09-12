@@ -2,7 +2,35 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-013] - Testing & Reliability Hardening
+
+### Hardened & Fixed
+- Financial Integrity:
+  - `Money.kt`: Added `Math.multiplyExact(rupees, 100L)` to `fromRupees(rupees: Long)` to reject multiplication overflow beyond `Long.MAX_VALUE / 100L` with `ArithmeticException`.
+  - `GoalProgressCalculator.kt`: Added `BigInteger` calculation fallback when `currentPaise * 100L` would exceed `Long.MAX_VALUE`, guaranteeing overflow-free progress computation even for astronomical balance amounts.
+- Multi-Pig & Selection Integrity:
+  - `DeletePigUseCase.kt`: Fixed issue where deleting a non-active pig unconditionally reset `selectedPigId` to the first surviving pig. Guarded fallback so `selectedPigId` is only reset when `activePigId == pigId`.
+- Navigation & Presentation:
+  - `Screen.kt`: Removed hardcoded default parameter `pigId = 1L` from `Screen.AddMoney.createRoute(pigId: Long)` to enforce explicit routing destinations.
+  - `ClinkNavGraph.kt`: Fixed `HistoryScreen` empty state "Save First ₹10" callback so it routes to the actual history `pigId` rather than defaulting to pig 1.
+  - `PigDetailScreen.kt`: Replaced infinite `CircularProgressIndicator` on `pig == null` with an accessible `ClinkEmptyState` ("Pig Not Found" with back navigation) to handle deleted or invalid pig routes gracefully.
+- Testing Suite Expansion (+32 tests, total 196 tests / 37 test classes, 100% passing):
+  - Added `FinancialIntegrityTest.kt` (9 unit tests).
+  - Added `MultiPigIsolationHardeningTest.kt` (6 unit tests).
+  - Added `TransactionReliabilityTest.kt` (2 unit tests).
+  - Added `GoalReliabilityTest.kt` (7 unit tests).
+  - Added `PigSelectionReliabilityTest.kt` (5 unit tests).
+  - Extended `PigCrudUseCaseTest.kt` (+1 unit test).
+  - Extended `MoneyTest.kt` (+2 unit tests).
+- Static Quality Gates:
+  - `test`: 196/196 passing.
+  - `lintDebug`: 0 errors, 0 warnings.
+  - `assembleDebug`: SUCCESS.
+- Runtime Verification:
+  - Verified Scenarios A through AD on Android 16 / API 36 emulator (`emulator-5554`): multi-pig creation, SQLite balance isolation, transaction isolation, dark mode / light mode, rapid interaction, process restart persistence, and 0 fatal crashes in logcat.
+
 ## [TASK-012] - Multi-Pig Architecture
+
 
 ### Added
 - Data Layer:

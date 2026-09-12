@@ -83,6 +83,18 @@
 26. **Software Keyboard Geometry Displacement in Compose Dialogs**:
    - When an `AlertDialog` with a `TextField` opens and gains focus on Android, the IME pushes the dialog and its action buttons upward.
    - When automating UI interactions with coordinate taps, coordinates must account for the displaced dialog position or dismiss the keyboard (`adb shell input keyevent 4`) prior to tapping dialog action buttons.
+27. **Multiplication Overflow Boundary in Currency Factories**:
+   - While `Money.plus` used `Math.addExact`, factory functions like `Money.fromRupees(rupees: Long)` which perform `rupees * 100L` can silently overflow if passed a value greater than `Long.MAX_VALUE / 100`.
+   - Using `Math.multiplyExact(rupees, 100L)` inside `Money.fromRupees` guarantees that values exceeding maximum monetary capacity throw `ArithmeticException` rather than corrupting balances to negative paise.
+28. **Intermediate Arithmetic Overflow in Fractional Percentage Math**:
+   - In percentage calculations like `(currentPaise * 100L) / targetPaise`, when `currentPaise` is near `Long.MAX_VALUE`, `currentPaise * 100L` silently wraps around to negative values in standard integer arithmetic.
+   - Falling back to `BigInteger` when `currentPaise > Long.MAX_VALUE / 100L` guarantees exact, overflow-free percentage derivation regardless of how large the balance becomes.
+29. **Entity Selection Invariant During Non-Active Deletions**:
+   - When an entity deletion usecase executes, blindly resetting the active selection to a fallback entity resets the user's active view even if the entity being deleted was completely unrelated to the current view.
+   - Guarding the selection fallback with `if (activePigId == pigId)` ensures deleting background entities preserves the user's active selection without disrupting their current workflow.
+30. **Windows SQLite File Locking with WAL in Host Diagnostic Scripts**:
+   - In Room / SQLite WAL mode, the `-shm` and `-wal` files on disk are locked by active SQLite processes.
+   - When writing diagnostic Python scripts on Windows to read pulled SQLite databases, always close the SQLite connection before attempting to delete or overwrite temporary files, preventing `OSError: [Errno 22] Invalid argument` or file lock exceptions.
 
 
 

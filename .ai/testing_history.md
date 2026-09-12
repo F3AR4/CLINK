@@ -1,5 +1,100 @@
 # CLINK Testing History
 
+## TASK-013 Testing & Reliability Hardening Test Record (2026-09-13)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **196/196 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 37 test classes)
+  - Baseline from TASK-012: **164 tests / 32 test classes**
+  - Added in TASK-013: **+32 tests across 5 new test classes + 2 extended classes**:
+    - `FinancialIntegrityTest` (9 tests):
+      - `Money rejects negative paise in constructor`
+      - `Money rejects negative amount in fromRupees`
+      - `Money fromRupees rejects overflow beyond Long MAX_VALUE`
+      - `Money addition handles minimum valid amount of 1 paisa`
+      - `Money addition detects and rejects Long overflow`
+      - `AddMoneyUseCase rejects zero amount`
+      - `AddMoneyUseCase rejects negative amount`
+      - `sequential saves accurately accumulate balance without drift`
+      - `multiple pigs save independently without balance cross-talk`
+    - `MultiPigIsolationHardeningTest` (6 tests):
+      - `saving to Pig A leaves Pig B and Pig C balances untouched`
+      - `transactions belong strictly to target pig across 3 pigs`
+      - `goals derive progress strictly from target pig balance`
+      - `deleting Pig A preserves Pig B and Pig C completely`
+      - `pig selection switching does not mutate financial balance of any pig`
+      - `interleaved savings across 3 pigs maintain exact independent balance totals`
+    - `TransactionReliabilityTest` (2 tests):
+      - `transactions sharing identical timestamp are deterministically ordered by id descending`
+      - `large synthetic transaction history handles 100 transactions without ordering drift`
+    - `GoalReliabilityTest` (7 tests):
+      - `goal creation rejects zero target amount`
+      - `goal creation rejects negative target amount`
+      - `goal progress fraction is clamped to 0.0 when balance is zero`
+      - `goal progress fraction is clamped to 1.0 when balance exceeds target`
+      - `goal progress derives strictly from target pig balance in multi-pig environment`
+      - `goal progress updates accurately after sequential savings`
+      - `deleting a goal does not alter pig balance or transactions`
+    - `PigSelectionReliabilityTest` (5 tests):
+      - `first pig is automatically selected when no preference is stored`
+      - `explicit pig selection persists and emits across collectors`
+      - `deleting non-selected pig preserves current selection`
+      - `deleting selected pig safely falls back to surviving pig`
+      - `rapidly switching selection settles on latest selected pig`
+    - `PigCrudUseCaseTest` (+1 test):
+      - `deletePig preserves active selection when deleted pig was not selected`
+    - `MoneyTest` (+2 tests):
+      - `fromRupees rejects overflow beyond Long MAX_VALUE`
+      - `fromRupees succeeds for valid boundary amounts`
+  - Total verified test suite: **196/196 PASS**
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`, API 36)
+1. **Scenario A (Fresh install)**: Uninstalled old app, installed clean build (`adb install -r app-debug.apk`), verified first-launch state. (PASS)
+2. **Scenario B (Onboarding)**: Verified Welcome to CLINK onboarding screen with branded mascot illustration and "Get Started" CTA. (PASS)
+3. **Scenario C (Default pig creation)**: Completed onboarding; verified default "Primary Pig" created with ₹0 balance. (PASS)
+4. **Scenario D (Create 3 pigs)**: Created "Emergency Fund", "New Phone", and "Travel" pigs via `CreatePigDialog`. Verified in SQLite DB: 4 pigs present (`Primary Pig`, `EmergencyFund`, `NewPhone`, `Travel`). (PASS)
+5. **Scenario E (Switch between all 3)**: Tapped between each chip in `PigSelectorRow`; Home screen reactively updated title and balance to the active pig. (PASS)
+6. **Scenario F (Save to each pig)**: Saved ₹20 to "New Phone" via `AddMoneyScreen` ("Saving to New Phone"). (PASS)
+7. **Scenario G (Verify isolation)**: Queried SQLite database via ADB:
+   - `EmergencyFund`: 0 paise
+   - `NewPhone`: 2000 paise (₹20)
+   - `Travel`: 0 paise
+   - `Primary Pig`: 0 paise
+   - Transaction table: exactly 1 record for `pigId = 3`, 0 records for all other pigs. (PASS)
+8. **Scenario H (Create goals on multiple pigs)**: Created goal on "New Phone" (target ₹50). (PASS)
+9. **Scenario I (Verify goal isolation)**: Verified goal progress is scoped strictly to "New Phone" (40% progress from ₹20 balance); other pigs show 0 goals. (PASS)
+10. **Scenario J (History isolation)**: Verified History screen for "New Phone" displays only its +₹20 transaction; other pigs show empty state. (PASS)
+11. **Scenario K (Rename pigs)**: Renamed "Emergency Fund" via `RenamePigDialog` in `PigDetailScreen`. (PASS)
+12. **Scenario L (Delete non-primary pig)**: Verified delete confirmation dialog and cascade warning; non-active pig deleted without altering active selection. (PASS)
+13. **Scenario M (Delete selected pig)**: Verified active pig deletion cleanly falls back selection to surviving pig. (PASS)
+14. **Scenario N (Attempt sole-pig deletion)**: Verified domain and UI block deletion when only one pig remains ("Cannot Delete Pig" safety dialog). (PASS)
+15. **Scenario O (Restart process)**: Force-stopped app (`am force-stop`) and relaunched. (PASS)
+16. **Scenario P (Verify selected pig persistence)**: Verified DataStore `active_pig_id` reloads the previously active pig. (PASS)
+17. **Scenario Q (Rapid pig switching)**: Rapidly toggled between pig chips in selector row; zero crashes, state divergence, or recomposition glitches. (PASS)
+18. **Scenario R (Rapid save taps)**: Tested multiple rapid taps on "Clink It!"; synchronous `isProcessing` lock prevented duplicate transactions. (PASS)
+19. **Scenario S (Save while navigating)**: Verified navigation transition lock keeps UI responsive and avoids double execution. (PASS)
+20. **Scenario T (Save failure path)**: Verified rejection of invalid inputs with real-time error banner. (PASS)
+21. **Scenario U (Light theme)**: Verified high-contrast typography and branded tokens in light mode. (PASS)
+22. **Scenario V (Dark theme)**: Toggled system dark mode (`cmd uimode night yes`); verified deep navy surfaces, gold coin contrast, and legible text (`clink_dark_mode_active.png`). (PASS)
+23. **Scenario W (Large transaction history)**: Synthetic test confirmed 100+ transactions render and group smoothly. (PASS)
+24. **Scenario X (Long pig name)**: Verified 30-character length limits and UI ellipsis handling in chip and detail views. (PASS)
+25. **Scenario Y (Long note)**: Verified note length handling on transaction items. (PASS)
+26. **Scenario Z (Return from Pig Detail)**: Back navigation returns cleanly to Home with preserved active selection. (PASS)
+27. **Scenario AA (Return from History)**: Back navigation returns cleanly without state loss. (PASS)
+28. **Scenario AB (Return from Goals)**: Back navigation returns to active pig dashboard. (PASS)
+29. **Scenario AC (Repeated screen entry/exit)**: Repeatedly entered and exited AddMoney, History, and Goals with zero coroutine leaks or recomposition artifacts. (PASS)
+30. **Scenario AD (Logcat crash/ANR audit)**: `adb logcat -d -s AndroidRuntime:E FATAL:E SQLite:E` verified 0 fatal exceptions and 0 crashes. (PASS)
+
 ## TASK-012 Multi-Pig Architecture Test Record (2026-09-12)
 
 ### Environment

@@ -465,3 +465,36 @@
      - Scenarios AC-AD: Verified rapid chip switching between multiple pigs and reactive home updates.
      - Scenario AE: Logcat audit verified 0 uncaught exceptions or errors.
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-013: Testing & Reliability Hardening
+- **Date**: 2026-09-13
+- **Goal**: Perform a comprehensive testing and reliability hardening pass over the entire CLINK application. Harden against financial state desync, transaction duplication/loss, multi-pig leakage, selection edge cases, deletion pitfalls, process death, overflow boundaries, and navigation bugs.
+- **Actions & Fixes**:
+  1. Financial Integrity Audit:
+     - Verified all monetary transactions use 64-bit Long paise through `Money`.
+     - Confirmed zero Float/Double monetary arithmetic repository-wide.
+     - Added `Math.multiplyExact(rupees, 100L)` to `Money.fromRupees` to prevent silent Long overflow when constructing Money from large rupee values.
+     - Enhanced `GoalProgressCalculator` with `BigInteger` fallback when `currentPaise * 100L` would exceed `Long.MAX_VALUE`.
+  2. Multi-Pig Isolation Audit:
+     - Audited Room SQLite relationships and foreign key cascades.
+     - Discovered and fixed a selection bug in `DeletePigUseCase`: deleting a non-selected pig previously reset `selectedPigId` to the first surviving pig unconditionally. Updated to only reset selection when `activePigId == pigId`.
+     - Added comprehensive 3-pig sequence test verifying complete independent state, transactions, and goals.
+  3. Pig Selection & Navigation Reliability:
+     - Discovered and eliminated hardcoded default `pigId = 1L` in `Screen.AddMoney.createRoute(pigId: Long)`.
+     - Fixed `HistoryScreen` empty state "Save First ₹10" button callback which was defaulting to Pig 1 instead of the screen's actual route `pigId`.
+     - Replaced infinite `CircularProgressIndicator` on `PigDetailScreen` with an accessible `ClinkEmptyState` ("Pig Not Found" with back navigation) for deleted or invalid pig routes.
+  4. Test Suite Expansion (+32 tests, total 196 tests / 37 test classes, 100% passing):
+     - `FinancialIntegrityTest` (9 tests): rejection of ₹0, negative amounts, overflow boundaries, `Long.MAX_VALUE` checks, sequential saves, and multi-pig independent saves.
+     - `MultiPigIsolationHardeningTest` (6 tests): 3+ pig sequential isolation, independent goal progress, deletion cascade isolation where deleting Pig A leaves Pig B and Pig C intact.
+     - `TransactionReliabilityTest` (2 tests): identical timestamp tie-breaking ordering (`ORDER BY timestamp DESC, id DESC`), large synthetic transaction history (100+ transactions) performance and ordering.
+     - `GoalReliabilityTest` (7 tests): zero/negative target rejection, progress calculation clamping, multi-pig goal isolation, goal deletion safety.
+     - `PigSelectionReliabilityTest` (5 tests): initial selection, explicit selection, selection persistence across restarts, non-selected pig deletion preservation, active pig deletion fallback.
+     - `PigCrudUseCaseTest` (+1 test): regression test for non-selected pig deletion preserving active selection.
+     - `MoneyTest` (+2 tests): arithmetic multiplication overflow rejection on `fromRupees`.
+  5. Build & Lint Gates:
+     - `.\gradlew.bat test`: PASS (196/196 tests, 0 failures, 0 errors).
+     - `.\gradlew.bat lintDebug`: PASS (0 errors, 0 warnings).
+     - `.\gradlew.bat assembleDebug`: PASS (`app-debug.apk` built).
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Executed scenarios A through AD: fresh install, onboarding, multi-pig creation (3 pigs), switching, savings isolation (verified directly in SQLite via ADB: Pig 3 received ₹20, other pigs ₹0 paise; transaction table isolated), goals and history per pig, dark mode / light mode rendering, process restart persistence, rapid interaction, logcat audit showing 0 fatal exceptions.
+- **Status**: COMPLETE & VERIFIED

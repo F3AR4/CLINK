@@ -84,4 +84,21 @@ class MoneyTest {
             largeMoney + Money(1L)
         }
     }
+
+    @Test
+    fun `fromRupees overflowing Long MAX_VALUE throws ArithmeticException`() {
+        assertThrows(ArithmeticException::class.java) {
+            Money.fromRupees(Long.MAX_VALUE / 50)
+        }
+    }
+
+    @Test
+    fun `isPositive and isZero reflect paise state accurately`() {
+        assertThat(Money.ZERO.isZero).isTrue()
+        assertThat(Money.ZERO.isPositive).isFalse()
+
+        val positiveMoney = Money(1L)
+        assertThat(positiveMoney.isZero).isFalse()
+        assertThat(positiveMoney.isPositive).isTrue()
+    }
 }

@@ -124,6 +124,21 @@ class PigCrudUseCaseTest {
     }
 
     @Test
+    fun `delete pig when deleting a non-selected pig preserves the active selected pig`() = runTest {
+        val vacationPig = Pig(id = 3L, name = "Vacation", balance = Money.RS_20)
+        allPigsFlow.value = listOf(defaultPig, emergencyPig, vacationPig)
+        coEvery { pigRepository.getPigByIdOnce(2L) } returns emergencyPig
+        selectedPigIdFlow.value = 3L // Vacation Pig (ID 3) is selected
+
+        val result = deletePigUseCase(pigId = 2L) // Delete Emergency Pig (ID 2)
+        assertThat(result.isSuccess).isTrue()
+        coVerify { pigRepository.deletePig(2L) }
+
+        // Selected pig should remain Vacation Pig (ID 3), NOT overwritten
+        assertThat(selectedPigIdFlow.value).isEqualTo(3L)
+    }
+
+    @Test
     fun `select pig validates existence before updating preferences`() = runTest {
         coEvery { pigRepository.getPigByIdOnce(999L) } returns null
 

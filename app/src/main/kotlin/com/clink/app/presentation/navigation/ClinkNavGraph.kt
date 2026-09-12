@@ -75,10 +75,11 @@ fun ClinkNavGraph(
                     defaultValue = "1"
                 }
             )
-        ) {
+        ) { backStackEntry ->
+            val pigId = backStackEntry.arguments?.getString("pigId")?.toLongOrNull() ?: 1L
             HistoryScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAddMoney = { navController.navigate(Screen.AddMoney.createRoute()) }
+                onNavigateToAddMoney = { navController.navigate(Screen.AddMoney.createRoute(pigId)) }
             )
         }
 

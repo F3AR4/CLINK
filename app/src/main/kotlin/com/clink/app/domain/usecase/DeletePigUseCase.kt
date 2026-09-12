@@ -30,10 +30,14 @@ class DeletePigUseCase(
             pigRepository.deletePig(pigId)
 
             // If the deleted pig was the active one, fallback to another surviving pig
-            val remainingPigs = allPigs.filter { it.id != pigId }
-            val fallbackPig = remainingPigs.firstOrNull()
-            if (fallbackPig != null) {
-                userPreferencesRepository.setSelectedPigId(fallbackPig.id)
+            val currentSelected = userPreferencesRepository.selectedPigId.first()
+            val activePigId = currentSelected ?: allPigs.firstOrNull()?.id
+            if (activePigId == pigId) {
+                val remainingPigs = allPigs.filter { it.id != pigId }
+                val fallbackPig = remainingPigs.firstOrNull()
+                if (fallbackPig != null) {
+                    userPreferencesRepository.setSelectedPigId(fallbackPig.id)
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {

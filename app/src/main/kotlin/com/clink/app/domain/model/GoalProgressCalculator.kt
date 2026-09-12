@@ -37,8 +37,14 @@ object GoalProgressCalculator {
             isCompleted -> 100
             currentPaise <= 0L -> 0
             else -> {
-                // Integer math: (current * 100) / target
-                val raw = ((currentPaise * 100L) / targetPaise).toInt()
+                // Integer math: (current * 100) / target with overflow protection
+                val raw = try {
+                    (Math.multiplyExact(currentPaise, 100L) / targetPaise).toInt()
+                } catch (e: ArithmeticException) {
+                    val bigCurrent = java.math.BigInteger.valueOf(currentPaise)
+                    val bigTarget = java.math.BigInteger.valueOf(targetPaise)
+                    (bigCurrent.multiply(java.math.BigInteger.valueOf(100L)).divide(bigTarget)).toInt()
+                }
                 // Never show 100% if current < target
                 raw.coerceIn(0, 99)
             }

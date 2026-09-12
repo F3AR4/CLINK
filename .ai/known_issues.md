@@ -8,10 +8,9 @@
    - `medium_phone` AVD created and verified on API 36 (`sdk_gphone64_x86_64`, Android 16).
    - Live end-to-end smoke testing executed on device: fresh launch, savings flow (₹10, ₹20, ₹50), restart persistence, and rapid double-tap suppression all verified.
 
-## Technical Debt & Placeholders
-1. **Screen UI is Placeholder**:
-   - Current screens are lightweight placeholders designed to validate navigation, local persistence, and ViewModel wiring. Production UI, coin animations, and playful visual micro-interactions will be built in subsequent tasks.
-2. **Room Database Destructive Migration**:
-   - Currently configured with `.fallbackToDestructiveMigration()` in `DatabaseModule.kt` for early development velocity. Production migrations must be implemented once production schema stabilizes.
-3. **Single Pig Assumption in Sample Navigation**:
-   - AddMoney and History navigation routes currently use a fallback `pigId = 1L` in simple default actions until Multi-Pig selection is fully polished.
+## Technical Debt & Future Production Hardening
+1. **Room Database Destructive Migration**:
+   - Currently configured with `.fallbackToDestructiveMigration()` in `DatabaseModule.kt` for early development velocity. When schema version 2 is introduced for future features, formal `Migration(1, 2)` implementations will replace destructive migration to preserve user data across production releases.
+2. **Payment Layer Fake Abstraction**:
+   - Phase 1 intentionally uses `FakePaymentRepository` for offline and deterministic financial operation. Integration with authentic banking/UPI payment gateways will occur in a dedicated payment task.
+

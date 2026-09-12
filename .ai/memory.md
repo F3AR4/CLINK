@@ -22,7 +22,7 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-012 Complete)
+## 4. Current State (TASK-013 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
@@ -36,14 +36,21 @@
 - Transaction Engine hardened and verified with atomic consistency.
 - Goals Engine scoped per pig with derived progress from authoritative pig balances.
 - CLINK Coin + Pig Animation System verified across multiple pigs with target-aware animations.
+- Reliability & Financial Integrity Hardening (TASK-013):
+  - Zero Float/Double financial arithmetic verified repository-wide.
+  - Multi-pig financial and transaction isolation audited and verified at database level.
+  - Fixed `DeletePigUseCase` selection bug (only resets active pig if the deleted pig was active).
+  - Eliminated hardcoded default parameter `pigId = 1L` in `Screen.kt` and wired `HistoryScreen` empty state to route pig.
+  - Added arithmetic overflow guards in `Money.fromRupees` (`Math.multiplyExact`) and `GoalProgressCalculator` (`BigInteger` fallback).
+  - Handled invalid/deleted pig ID in `PigDetailScreen` with user-friendly empty state and back action.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat test` verified (164 tests across 33 test classes, 0 failures, 100% PASS; baseline from TASK-011 was 150 tests + 14 tests added in TASK-012).
+  - Unit Tests: `.\gradlew.bat test` verified (196 tests across 37 test classes, 0 failures, 100% PASS; baseline from TASK-012 was 164 tests + 32 tests added in TASK-013).
   - Static Analysis: `.\gradlew.bat lintDebug` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-AE verified.
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 fatal crashes, Scenarios A-AD verified.
 
 
 

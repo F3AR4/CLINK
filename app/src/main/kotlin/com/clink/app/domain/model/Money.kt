@@ -58,7 +58,7 @@ value class Money(val paise: Long) : Comparable<Money> {
 
         fun fromRupees(rupees: Long): Money {
             require(rupees >= 0) { "Rupees cannot be negative: $rupees" }
-            return Money(rupees * 100L)
+            return Money(Math.multiplyExact(rupees, 100L))
         }
 
         fun fromPaise(paise: Long): Money = Money(paise)

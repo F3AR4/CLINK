@@ -55,6 +55,7 @@ import com.clink.app.domain.usecase.UpdatePigUseCase
 import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
+import com.clink.app.presentation.components.ClinkEmptyState
 import com.clink.app.presentation.components.ClinkOutlinedButton
 import com.clink.app.presentation.components.ClinkPigIllustration
 import com.clink.app.presentation.components.ClinkSectionHeader
@@ -201,7 +202,12 @@ fun PigDetailScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                ClinkEmptyState(
+                    title = "Pig Not Found",
+                    description = "This savings pig may have been deleted or does not exist.",
+                    actionButtonText = "Go Back",
+                    onActionClick = onNavigateBack
+                )
             }
         } else {
             val currentPig = pig!!
