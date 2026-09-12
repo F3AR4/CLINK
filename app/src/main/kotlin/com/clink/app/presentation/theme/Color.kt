@@ -23,6 +23,8 @@ val ClinkTealDark = Color(0xFF1E8274)     // Deep teal for high contrast text
 // ==========================================
 val CoinGold = Color(0xFFFFB703)          // Warm golden coin
 val CoinGoldLight = Color(0xFFFFD166)     // Coin gleam / highlight
+val CoinGoldDark = Color(0xFFE09200)      // Deep gold shading
+val CoinGoldRim = Color(0xFFC78000)       // Coin outer rim
 val PiggyBlush = Color(0xFFFFAAA6)        // Rosy cheeks
 val PiggyEarInside = Color(0xFFFFB5C2)    // Ear inner shadow
 

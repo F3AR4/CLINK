@@ -15,11 +15,15 @@ object ClinkMotion {
     const val DurationFast = 150
     const val DurationNormal = 300
     const val DurationSlow = 500
+    const val DurationFlight = 450
+    const val DurationReaction = 350
+    const val DurationCelebration = 600
 
     // Easings
     val StandardEasing: Easing = FastOutSlowInEasing
     val DecelerateEasing: Easing = LinearOutSlowInEasing
     val EmphasizedEasing: Easing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
+    val FlightEasing: Easing = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1.0f)
 
     // Springs
     fun <T> bouncySpring() = spring<T>(

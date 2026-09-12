@@ -32,7 +32,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,8 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.clink.app.domain.model.Money
 import com.clink.app.domain.model.PigState
 import com.clink.app.domain.model.Transaction
+import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
 import com.clink.app.presentation.components.ClinkEmptyState
@@ -71,6 +78,17 @@ fun HomeScreen(
     val primaryPigId = primaryPig?.id ?: 1L
     val progression = primaryPig?.progression
     val state = primaryPig?.state ?: PigState.NEW
+
+    var previousBalance by remember { mutableStateOf<Money?>(null) }
+    var pigReactionTrigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(uiState.totalBalance) {
+        val prev = previousBalance
+        if (prev != null && uiState.totalBalance.paise > prev.paise) {
+            pigReactionTrigger++
+        }
+        previousBalance = uiState.totalBalance
+    }
 
     Scaffold(
         topBar = {
@@ -191,7 +209,7 @@ fun HomeScreen(
                                     letterSpacing = 1.sp
                                 )
 
-                                MoneyDisplay(
+                                AnimatedMoneyDisplay(
                                     money = uiState.totalBalance,
                                     fontSize = MaterialTheme.typography.displayMedium.fontSize,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -216,6 +234,7 @@ fun HomeScreen(
                             ClinkPigIllustration(
                                 size = 88.dp,
                                 state = state,
+                                reactionTrigger = pigReactionTrigger,
                                 contentDescription = "Pig is ${state.displayName}"
                             )
                         }

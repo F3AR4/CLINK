@@ -363,9 +363,9 @@
        - Loading State: Centered `CircularProgressIndicator`.
      - Connected `onNavigateToAddMoney` in `ClinkNavGraph.kt` so empty state action navigates directly to Add Money.
   2. Automated Testing:
-     - `TransactionDateFormatterTest.kt`: 8 unit tests covering today, yesterday, same year, different year, group headers, and accessibility descriptions.
-     - `HistoryViewModelTest.kt`: 7 unit tests covering initial loading state, populated transactions, aggregate total calculation, empty list handling, convenience raw transactions flow, pigId argument passing, repository error handling, and retry recovery.
-     - All 131 project unit tests pass 100%.
+      - `TransactionDateFormatterTest.kt`: 10 unit tests covering today, yesterday, same year, different year, uppercase group headers, and accessibility descriptions.
+      - `HistoryViewModelTest.kt`: 7 unit tests (5 new + 2 existing) covering initial loading state, populated transactions, aggregate total calculation, empty list handling, convenience raw transactions flow, pigId argument passing, repository error handling, and retry recovery.
+      - All 143 project unit tests pass 100% (128 baseline from TASK-009 + 15 added in TASK-010).
   3. Build & Lint:
      - `assembleDebug`: SUCCESSFUL.
      - `lintDebug`: 0 errors, 0 warnings.
@@ -383,4 +383,46 @@
      - Scenario K (Large List): Added 6 additional savings -> verified smooth `LazyColumn` scrolling: PASS.
      - Scenario L (Logcat Audit): `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E` verified 0 fatal exceptions, 0 runtime errors: PASS.
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-011: CLINK Coin + Pig Animation System
+- **Date**: 2026-09-12
+- **Goal**: Implement CLINK's signature savings animation system: User taps Save -> Amount accepted -> Coin/token visually launches toward pig -> Pig reacts with squash-and-stretch bounce -> "CLINK! + ₹X 🐷" celebration feedback appears -> Balance updates with smooth rolling animation.
+- **Actions Taken**:
+  1. Tokens & Design System:
+     - Added animation duration tokens in `Motion.kt`: `DurationFlight = 450`, `DurationReaction = 350`, `DurationCelebration = 600`, and `FlightEasing` (FastOutSlowIn / cubic-bezier).
+     - Added coin gold colors in `Color.kt`: `CoinGoldDark` (`#C48800`) and `CoinGoldRim` (`#FFE885`).
+  2. Presentation Components:
+     - Created `ClinkSavingsToken`: Reusable golden coin medallion with radial gradients, outer rim, inner shadow, and dynamic currency text scaling.
+     - Created `ClinkCelebrationBadge`: Reusable spring-scale "CLINK! + ₹X 🐷" celebration pill badge.
+     - Created `AnimatedMoneyDisplay`: Continuous `Animatable` counter interpolating from previous to authoritative balance, using presentation Float strictly for interpolation while guaranteeing settlement on authoritative `money.paise`. Zero Float/Double currency conversions.
+     - Enhanced `ClinkPigIllustration`: Added presentation-layer squash-and-stretch bounce reaction (`reactionTrigger: Any? = null`) using Compose `Animatable` and `graphicsLayer`.
+     - Created `ClinkSavingsAnimation`: Layout-aware flight orchestrator coordinating the 4-phase sequence (`FLIGHT` -> `IMPACT` -> `CELEBRATION` -> `COMPLETED`) with dynamic start/target offset calculations via `onGloballyPositioned`.
+  3. Screen Integrations:
+     - `AddMoneyScreen`: Orchestrated complete signature savings sequence: user taps save -> domain transaction commits -> coin token launches upwards towards pig -> pig squashes & stretches -> "CLINK! + ₹X 🐷" badge appears -> button remains locked against double taps during animation -> auto-navigates smoothly back.
+     - `HomeScreen`: Integrated `AnimatedMoneyDisplay` on primary card and reactive pig bounce triggered on balance increase.
+     - `PigDetailScreen`: Integrated `AnimatedMoneyDisplay` and reactive pig bounce on balance increment.
+  4. Testing:
+     - `ClinkSavingsAnimationTest`: 7 unit tests covering animation stage transitions, savings token text and accessibility formatting, balance interpolation safety, and easing parameters. Total project unit tests increased from 143 to 150 (100% passing).
+  5. Build & Lint:
+     - `assembleDebug`: SUCCESSFUL.
+     - `lintDebug`: 0 errors, 0 warnings.
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A (Fresh launch): Verified ₹220 Home baseline.
+     - Scenario B (Open Add Money): Verified clean initial state.
+     - Scenario C (Save ₹10): Verified coin animation, pig reaction, balance reaches ₹230.
+     - Scenario D (Save ₹20): Verified "CLINK! + ₹20 🐷" badge, balance reaches ₹250.
+     - Scenario E (Save ₹50): Captured mid-flight coin screenshot (`anim_e_done.png`), balance reaches ₹300.
+     - Scenario F (Custom ₹35): Verified balance interpolation rolling up (captured mid-roll at ₹321.48 in `anim_f_done3.png`), settling to ₹335.
+     - Scenario G (Save with note): Saved with note, transaction and animation succeeded.
+     - Scenario H (Rapid taps): 5 rapid taps on "Clink It!" produced exactly one transaction (verified in Room SQLite: 14 total transactions, ₹355 balance), zero duplicate transactions or animation storms.
+     - Scenario I (Restart app): App force-stopped and relaunched; ₹355 persisted authoritatively, no old animation replayed.
+     - Scenario J (History): Verified all transactions in Saving History in newest-first order with correct amounts and notes.
+     - Scenario K (Pig Detail): Verified Pig Detail shows ₹355 balance and Growing state.
+     - Scenario L (Light mode): Verified high visual fidelity across light mode.
+     - Scenario M (Dark mode): Verified dark mode theme styling for coin token, celebration badge, Pig Detail, Add Money, and Home.
+     - Scenario N (Navigation during/after animation): Verified back navigation and back stack integrity with zero crashes or stuck overlays.
+     - Scenario O (Multiple consecutive saves): Verified system stability across 6+ consecutive saves.
+     - Scenario P (Logcat audit): `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E FATAL:E` verified 0 fatal exceptions and 0 runtime errors.
+- **Status**: COMPLETE & VERIFIED
+
 

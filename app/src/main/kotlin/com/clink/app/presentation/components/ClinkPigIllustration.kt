@@ -1,8 +1,12 @@
 package com.clink.app.presentation.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -10,11 +14,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.clink.app.domain.model.PigState
+import com.clink.app.presentation.theme.ClinkMotion
 import com.clink.app.presentation.theme.ClinkNavy
 import com.clink.app.presentation.theme.ClinkPink
 import com.clink.app.presentation.theme.ClinkPinkDark
@@ -23,26 +29,62 @@ import com.clink.app.presentation.theme.CoinGold
 import com.clink.app.presentation.theme.CoinGoldLight
 import com.clink.app.presentation.theme.PiggyBlush
 import com.clink.app.presentation.theme.PiggyEarInside
+import kotlinx.coroutines.launch
 
 /**
  * Delightful, Compose-native vector illustration of the CLINK piggy bank mascot.
  * Dynamically reflects the [PigState] progression (NEW, GROWING, HEALTHY, FULL)
- * with expressive facial features, coin visibility, and celebratory accents.
+ * with expressive facial features, coin visibility, celebratory accents, and
+ * a tactile squash-and-stretch reaction when savings are deposited.
  */
 @Composable
 fun ClinkPigIllustration(
     modifier: Modifier = Modifier,
     size: Dp = 72.dp,
     state: PigState = PigState.GROWING,
-    contentDescription: String? = null
+    contentDescription: String? = null,
+    reactionTrigger: Any? = null
 ) {
+    val bounceY = remember { Animatable(0f) }
+    val scaleX = remember { Animatable(1f) }
+    val scaleY = remember { Animatable(1f) }
+
+    LaunchedEffect(reactionTrigger) {
+        if (reactionTrigger != null) {
+            // Concurrent squash & stretch + vertical bounce
+            launch {
+                bounceY.animateTo(-14f, tween(ClinkMotion.DurationFast, easing = ClinkMotion.DecelerateEasing))
+                bounceY.animateTo(0f, ClinkMotion.bouncySpring())
+            }
+            launch {
+                // Anticipation stretch -> squash on landing -> settle
+                scaleX.animateTo(0.93f, tween(80))
+                scaleX.animateTo(1.08f, tween(120))
+                scaleX.animateTo(1.0f, ClinkMotion.bouncySpring())
+            }
+            launch {
+                scaleY.animateTo(1.08f, tween(80))
+                scaleY.animateTo(0.92f, tween(120))
+                scaleY.animateTo(1.0f, ClinkMotion.bouncySpring())
+            }
+        }
+    }
+
     val semanticModifier = if (contentDescription != null) {
         modifier.semantics { this.contentDescription = contentDescription }
     } else {
         modifier
     }
 
-    Canvas(modifier = semanticModifier.size(size)) {
+    Canvas(
+        modifier = semanticModifier
+            .size(size)
+            .graphicsLayer {
+                translationY = bounceY.value.dp.toPx()
+                this.scaleX = scaleX.value
+                this.scaleY = scaleY.value
+            }
+    ) {
         val w = this.size.width
         val h = this.size.height
 

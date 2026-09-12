@@ -43,18 +43,26 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clink.app.domain.model.Money
+import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkAmountChip
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
 import com.clink.app.presentation.components.ClinkPigIllustration
+import com.clink.app.presentation.components.ClinkSavingsAnimationOverlay
 import com.clink.app.presentation.components.ClinkTopBar
 import com.clink.app.presentation.components.MoneyDisplay
 import com.clink.app.presentation.theme.ClinkDimens
 import com.clink.app.presentation.theme.SuccessGreen
-import kotlinx.coroutines.delay
 
 @Composable
 fun AddMoneyScreen(
@@ -65,17 +73,26 @@ fun AddMoneyScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    var isAnimationActive by remember { mutableStateOf(false) }
+    var animatingAmount by remember { mutableStateOf<Money?>(null) }
+    var pigReactionTrigger by remember { mutableIntStateOf(0) }
+
+    var rootCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var pigCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var buttonCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is AddMoneyEvent.Success -> {
+                    // Trigger the signature CLINK coin flight and pig reaction animation
+                    animatingAmount = event.amount
+                    isAnimationActive = true
                     Toast.makeText(
                         context,
                         "CLINK! ${event.amount.formatDisplay()} saved 🐷",
                         Toast.LENGTH_SHORT
                     ).show()
-                    delay(600)
-                    onNavigateBack()
                 }
                 is AddMoneyEvent.Error -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
@@ -89,30 +106,41 @@ fun AddMoneyScreen(
             ClinkTopBar(
                 title = "Add to CLINK",
                 canNavigateBack = true,
-                onNavigateBack = onNavigateBack
+                onNavigateBack = {
+                    if (!isAnimationActive) onNavigateBack()
+                }
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = ClinkDimens.current.spacingXl)
-                .padding(bottom = ClinkDimens.current.spacingXl),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .onGloballyPositioned { rootCoordinates = it }
         ) {
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = ClinkDimens.current.spacingXl)
+                    .padding(bottom = ClinkDimens.current.spacingXl),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
 
-            // Piggy mascot banner
-            ClinkPigIllustration(size = 80.dp)
+                // Piggy mascot banner with presentation reaction trigger
+                ClinkPigIllustration(
+                    size = 80.dp,
+                    reactionTrigger = pigReactionTrigger,
+                    modifier = Modifier.onGloballyPositioned { pigCoordinates = it }
+                )
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
+                Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
 
-            Text(
-                text = "Feed your Piggy",
-                style = MaterialTheme.typography.titleMedium,
+                Text(
+                    text = "Feed your Piggy",
+                    style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -148,7 +176,7 @@ fun AddMoneyScreen(
                         letterSpacing = 1.sp
                     )
                     Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
-                    MoneyDisplay(
+                    AnimatedMoneyDisplay(
                         money = uiState.selectedAmount,
                         fontSize = 44.sp,
                         color = if (uiState.validationError != null && uiState.selectedAmount.isZero) {
@@ -352,14 +380,15 @@ fun AddMoneyScreen(
             ClinkButton(
                 text = when {
                     uiState.isLoading -> "Clinking..."
-                    uiState.saveStatus is SaveStatus.Success -> "Saved! 🎉"
+                    isAnimationActive || uiState.saveStatus is SaveStatus.Success -> "Saved! 🎉"
                     else -> "Clink It! 🐷"
                 },
                 onClick = { viewModel.onAddMoney() },
-                enabled = uiState.canSave,
+                enabled = uiState.canSave && !isAnimationActive,
                 isLoading = uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .onGloballyPositioned { buttonCoordinates = it }
                     .semantics {
                         contentDescription = "Save ${uiState.selectedAmount.formatDisplay()} to Pig"
                     }
@@ -367,5 +396,42 @@ fun AddMoneyScreen(
 
             Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
         }
+
+        // Signature CLINK savings animation overlay
+        if (isAnimationActive && animatingAmount != null) {
+            val root = rootCoordinates
+            val start = if (root != null && buttonCoordinates != null && buttonCoordinates!!.isAttached) {
+                root.localPositionOf(
+                    buttonCoordinates!!,
+                    Offset(buttonCoordinates!!.size.width / 2f, buttonCoordinates!!.size.height / 2f)
+                )
+            } else {
+                Offset(500f, 1500f)
+            }
+
+            val target = if (root != null && pigCoordinates != null && pigCoordinates!!.isAttached) {
+                root.localPositionOf(
+                    pigCoordinates!!,
+                    Offset(pigCoordinates!!.size.width / 2f, pigCoordinates!!.size.height * 0.35f)
+                )
+            } else {
+                Offset(500f, 250f)
+            }
+
+            ClinkSavingsAnimationOverlay(
+                isPlaying = isAnimationActive,
+                amount = animatingAmount!!,
+                startOffset = start,
+                targetOffset = target,
+                onPigReaction = {
+                    pigReactionTrigger++
+                },
+                onAnimationComplete = {
+                    isAnimationActive = false
+                    onNavigateBack()
+                }
+            )
+        }
     }
+}
 }

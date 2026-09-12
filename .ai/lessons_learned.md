@@ -68,4 +68,8 @@
 21. **Binary Output Redirection in Windows PowerShell for ADB**:
    - In Windows PowerShell, redirecting `adb exec-out screencap -p > file.png` writes UTF-16LE text with a byte-order mark instead of raw binary bytes, corrupting image files.
    - Safe approaches: Save directly on device and pull (`adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png file.png`), or use `[System.IO.File]::WriteAllBytes`.
+22. **Presentation-Layer Animation Isolation & Coordinate Mapping**:
+   - Animations must never mutate or substitute domain models; visual counters (`AnimatedMoneyDisplay`) animate purely presentation floats while strictly settling on authoritative `money.paise`.
+   - Layout-aware coordinates should be captured reactively via `onGloballyPositioned` with relative window offset calculations rather than hardcoded device coordinates, ensuring animation paths adapt dynamically to arbitrary screen densities and orientations.
+
 

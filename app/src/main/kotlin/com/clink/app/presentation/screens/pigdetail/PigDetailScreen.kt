@@ -20,7 +20,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,9 +37,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.clink.app.domain.model.Money
 import com.clink.app.domain.model.Pig
 import com.clink.app.domain.model.PigState
 import com.clink.app.domain.repository.PigRepository
+import com.clink.app.presentation.components.AnimatedMoneyDisplay
 import com.clink.app.presentation.components.ClinkButton
 import com.clink.app.presentation.components.ClinkCard
 import com.clink.app.presentation.components.ClinkOutlinedButton
@@ -112,6 +119,17 @@ fun PigDetailScreen(
             val currentPig = pig!!
             val progression = currentPig.progression
 
+            var previousBalance by remember { mutableStateOf<Money?>(null) }
+            var pigReactionTrigger by remember { mutableIntStateOf(0) }
+
+            LaunchedEffect(currentPig.balance) {
+                val prev = previousBalance
+                if (prev != null && currentPig.balance.paise > prev.paise) {
+                    pigReactionTrigger++
+                }
+                previousBalance = currentPig.balance
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -134,6 +152,7 @@ fun PigDetailScreen(
                     ClinkPigIllustration(
                         size = 88.dp,
                         state = currentPig.state,
+                        reactionTrigger = pigReactionTrigger,
                         contentDescription = "Pig is ${currentPig.state.displayName}"
                     )
                 }
@@ -165,7 +184,7 @@ fun PigDetailScreen(
 
                 Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
 
-                MoneyDisplay(
+                AnimatedMoneyDisplay(
                     money = currentPig.balance,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,

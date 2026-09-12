@@ -22,7 +22,7 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-010 Complete)
+## 4. Current State (TASK-011 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
@@ -32,21 +32,22 @@
 - Home Dashboard polished as central everyday savings experience.
 - Add Money Experience polished as primary micro-saving action with quick chips, custom input, and real-time validation.
 - Goals Engine fully implemented and runtime verified.
-- History + Transaction UI polished and runtime verified:
-  - Aggregate Summary Card: reactively displays "TOTAL SAVED" and savings count badge.
-  - Contextual date and time formatting via `TransactionDateFormatter` with zero floating-point arithmetic.
-  - Timeline grouped by uppercase date headers ("TODAY", "YESTERDAY") in deterministic descending order.
-  - `TransactionItem` with prominent positive amounts (`+ ₹50`), notes, fallback handling, and accessibility descriptions.
-  - Smooth `LazyColumn` scrolling with pre-computed `TransactionUiModel`s.
-  - Explicit loading, friendly error with retry, and empty state navigating to Add Money.
+- History + Transaction UI polished and runtime verified.
+- CLINK Coin + Pig Animation System fully implemented and runtime verified:
+  - Tokens: `DurationFlight`, `DurationReaction`, `DurationCelebration`, `FlightEasing`, `CoinGoldDark`, `CoinGoldRim`.
+  - Presentation Components: `ClinkSavingsToken`, `ClinkCelebrationBadge`, `AnimatedMoneyDisplay`, `ClinkPigIllustration` (squash-and-stretch bounce), `ClinkSavingsAnimation` (4-phase flight orchestrator).
+  - Screen Integrations: `AddMoneyScreen` (coin flight, bounce, badge, button lockout, smooth exit), `HomeScreen` and `PigDetailScreen` (interpolating counter, reactive bounce).
+  - Strictly isolated presentation layer; zero Domain/Room/SQLite awareness or mutations.
+  - Zero Float/Double currency conversions; `Money` / `Long` paise remains authoritative.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat testDebugUnitTest` verified (131 tests, 0 failures, 100% PASS).
-  - Static Analysis: `.\gradlew.bat lint` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-L verified.
+  - Unit Tests: `.\gradlew.bat test` verified (150 tests across 30 test classes, 0 failures, 100% PASS; baseline from TASK-010 was 143 tests + 7 tests added in TASK-011).
+  - Static Analysis: `.\gradlew.bat lintDebug` verified (SUCCESS, 0 errors, 0 warnings).
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-P verified.
+
 
 
 

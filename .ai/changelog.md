@@ -2,6 +2,27 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-011] - CLINK Coin + Pig Animation System
+
+### Added
+- Motion & Design Tokens:
+  - `Motion.kt`: Added `DurationFlight = 450`, `DurationReaction = 350`, `DurationCelebration = 600`, and `FlightEasing` (FastOutSlowIn / custom cubic-bezier).
+  - `Color.kt`: Added `CoinGoldDark` (`#C48800`) and `CoinGoldRim` (`#FFE885`) for tactile coin rendering.
+- Presentation Components:
+  - `ClinkSavingsToken`: Compose-native golden coin medallion with radial gradients, outer rim, inner shadow, and dynamic currency text scaling (`₹10`, `₹20`, `₹50`, `₹100`, custom amounts).
+  - `ClinkCelebrationBadge`: Reusable spring-scale "CLINK! + ₹X 🐷" celebration pill badge with icon and animated entry.
+  - `AnimatedMoneyDisplay`: Smooth rolling balance interpolator between previous and authoritative balance, using presentation Float strictly for interpolation while guaranteeing settlement on authoritative `money.paise`. Zero Float/Double currency conversions.
+  - `ClinkPigIllustration`: Enhanced with presentation-only squash-and-stretch bounce reaction (`reactionTrigger: Any? = null`) using Compose `Animatable` and `graphicsLayer`.
+  - `ClinkSavingsAnimation`: Layout-aware flight orchestrator coordinating the 4-phase sequence (`FLIGHT` -> `IMPACT` -> `CELEBRATION` -> `COMPLETED`) with dynamic start/target offset calculations via `onGloballyPositioned`.
+- Screen Integrations:
+  - `AddMoneyScreen`: Orchestrated complete signature savings sequence: user taps save -> domain transaction commits -> coin token launches upwards towards pig -> pig squashes & stretches -> "CLINK! + ₹X 🐷" badge appears -> button remains locked against double taps during animation -> auto-navigates smoothly back.
+  - `HomeScreen`: Integrated `AnimatedMoneyDisplay` on primary card and reactive pig bounce triggered on balance increase.
+  - `PigDetailScreen`: Integrated `AnimatedMoneyDisplay` and reactive pig bounce on balance increment.
+- Testing:
+  - `ClinkSavingsAnimationTest`: 7 unit tests covering animation stage transitions, savings token text and accessibility formatting, balance interpolation safety, and easing parameters. Total project unit tests increased from 143 to 150 (100% passing).
+- Runtime Verification:
+  - Verified on Android 16 / API 36 emulator (`emulator-5554`) across all 16 runtime scenarios (A through P): fresh launch, ₹10, ₹20, ₹50, custom ₹35, note save, rapid tap protection, app restart persistence, history verification, pig detail verification, light/dark themes, navigation during animation, and clean logcat audit.
+
 ## [TASK-010] - History + Transaction UI
 
 ### Added

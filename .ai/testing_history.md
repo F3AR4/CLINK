@@ -1,6 +1,6 @@
 # CLINK Testing History
  
-## TASK-010 History + Transaction UI Test Record (2026-09-12)
+## TASK-011 CLINK Coin + Pig Animation System Test Record (2026-09-12)
  
 ### Environment
 - **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
@@ -12,10 +12,73 @@
 - **Android Studio**: 2026.1.4
 
 ### Automated Tests Executed
-- `.\gradlew.bat testDebugUnitTest`: **131/131 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
-  - `TransactionDateFormatterTest`: 8/8 (today, yesterday, same year, different year, group headers, accessibility descriptions, blank fallback)
-  - `HistoryViewModelTest`: 7/7 (initial loading state, populated transactions, aggregate total calculation, empty list handling, convenience raw transactions flow, pigId argument passing, repository error handling, retry recovery)
-  - All existing domain, data, usecase, and presentation tests pass 100%.
+- `.\gradlew.bat test`: **150/150 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 30 test suites)
+  - Baseline from TASK-010: **143 tests**
+  - Added in TASK-011: **+7 tests** (`ClinkSavingsAnimationTest`):
+    - `animation transitions through stages in correct sequence`: PASS
+    - `savings token formats whole rupee amounts accurately`: PASS
+    - `savings token formats zero amount cleanly`: PASS
+    - `savings token provides descriptive accessibility description`: PASS
+    - `animated balance calculation interpolates cleanly without floating-point financial drift`: PASS
+    - `animated balance calculation clamps progress beyond range [0, 1]`: PASS
+    - `flight motion duration and easing tokens are properly configured`: PASS
+  - Total verified test suite: **150/150 PASS** (both `testDebugUnitTest` and `testReleaseUnitTest` execute 150 tests with 0 failures)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`, API 36)
+1. **Scenario A - Fresh Launch**:
+   - Launched app -> Home screen showed authoritative baseline balance ₹220, pig illustration, and action buttons. (PASS)
+2. **Scenario B - Open Add Money**:
+   - Tapped Save Money -> Add Money screen opened cleanly with pig illustration, amount card, quick chips, and "Clink It!" button. (PASS)
+3. **Scenario C - Save ₹10**:
+   - Selected ₹10 denomination -> tapped "Clink It!" -> transaction saved -> gold coin token launched toward pig -> pig reacted with squash & stretch -> "CLINK! + ₹10 🐷" badge appeared -> balance animated smoothly to ₹230. (PASS)
+4. **Scenario D - Save ₹20**:
+   - Saved ₹20 -> verified "CLINK! + ₹20 🐷" celebration badge and pig bounce -> balance animated smoothly to ₹250. (PASS)
+5. **Scenario E - Save ₹50**:
+   - Saved ₹50 -> captured mid-flight coin screenshot (`anim_e_done.png`) -> balance animated to ₹300. (PASS)
+6. **Scenario F - Custom Amount (₹35)**:
+   - Entered ₹35 -> tapped "Clink It!" -> token rendered "₹35" -> balance interpolated cleanly (captured mid-roll at ₹321.48 in `anim_f_done3.png`) -> settled at ₹335. (PASS)
+7. **Scenario G - Save with Note**:
+   - Entered note "Chai treat" with ₹10 -> transaction saved and animation succeeded. (PASS)
+8. **Scenario H - Rapid Tap / Duplicate Protection**:
+   - Executed 5 rapid taps on "Clink It!" -> inspected Room SQLite database (`transactions` table) -> verified exactly 1 transaction was inserted (14 total transactions, ₹355 balance). Zero duplicate transactions or animation storms. (PASS)
+9. **Scenario I - Process Restart**:
+   - Terminated app via `am force-stop`, relaunched -> Home loaded with authoritative ₹355 balance -> no replay of old animation. (PASS)
+10. **Scenario J - History**:
+    - Navigated to Saving History -> verified all 14 transactions displayed in newest-first order with correct amounts (+ ₹10, + ₹35, + ₹50, + ₹20) and matching ₹355 total. Zero fake visual transactions. (PASS)
+11. **Scenario K - Pig Detail**:
+    - Navigated to Pig Detail -> verified ₹355 balance, Growing state, and animated pig reactiveness. (PASS)
+12. **Scenario L - Light Mode**:
+    - High-fidelity visual appearance verified in default light mode. (PASS)
+13. **Scenario M - Dark Mode**:
+    - Enabled system night mode via `cmd uimode night yes` -> verified dark mode styling on Pig Detail, Saving History, Add Money, and verified coin flight and celebration badge in dark mode. (PASS)
+14. **Scenario N - Navigation During/After Animation**:
+    - Back navigation from Add Money operates smoothly; no stuck overlay or broken back stack. (PASS)
+15. **Scenario O - Multiple Consecutive Legitimate Saves**:
+    - Completed 6+ consecutive saves (₹10, ₹20, ₹50, ₹35, ₹10, ₹10) with complete system stability. (PASS)
+16. **Scenario P - Logcat Audit**:
+    - `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E FATAL:E` verified 0 fatal exceptions, 0 runtime errors. (PASS)
+
+## TASK-010 History + Transaction UI Test Record (2026-09-12)
+
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **143/143 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 29 test suites)
+  - Baseline from TASK-009: **128 tests** (verified against commit `f494efd`; previously documented as 131 due to counting planned composite assertions rather than compiled `@Test` methods)
+  - Added in TASK-010: **+15 tests**:
+    - `TransactionDateFormatterTest`: 10/10 tests (today, yesterday, same year, different year, uppercase group headers, accessibility descriptions, blank note fallback)
+    - `HistoryViewModelTest`: expanded from 2 to 7 tests (+5 tests: initial loading state, aggregate total & count calculation, empty list handling, error mapping, and retry recovery)
+  - Total verified test suite: **143/143 PASS** (both `testDebugUnitTest` and `testReleaseUnitTest` execute 143 tests with 0 failures)
 - `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
 - `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
 
