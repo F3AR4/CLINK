@@ -2,6 +2,30 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-005] - Pig Engine + Single Pig Experience
+
+### Added
+- Domain Layer:
+  - `PigState`: progression enum (`NEW`, `GROWING`, `HEALTHY`, `FULL`) with human-readable labels and descriptions.
+  - `PigProgression`: data class modeling current balance, state, next monetary threshold, and normalized progress fraction.
+  - `PigStateCalculator`: centralized deterministic engine calculating states and progress using `Money` constants.
+  - Derived properties `Pig.state` and `Pig.progression`.
+  - `GetPrimaryPigUseCase`: observing the primary piggy bank reactively.
+- Presentation Layer:
+  - Dynamic `ClinkPigIllustration` rendering distinct facial expressions, coins, and accents for `NEW`, `GROWING`, `HEALTHY`, and `FULL`.
+  - Upgraded `HomeScreen` Hero Card with primary pig status badge, tier progress bar, dynamic illustration, and accessible semantics.
+  - Upgraded `PigDetailScreen` with CLINK design system, mascot hero, progression status card, detailed metadata card, and action buttons.
+- Unit Tests:
+  - `PigStateCalculatorTest` (7 tests).
+  - `PigProgressionPersistenceTest` (3 tests).
+  - `HomeViewModelTest` (2 tests).
+  - `PigDetailViewModelTest` (2 tests).
+
+### Changed
+- `HomeViewModel`: exposes `primaryPig` in `HomeUiState` for reactive single pig experience.
+- `HomeScreen`: `PigListItem` displays status badge and state-aware mascot.
+- `UseCaseModule`: provides `GetPrimaryPigUseCase`.
+
 ## [TASK-004] - Onboarding + Persistent User State
 
 ### Added

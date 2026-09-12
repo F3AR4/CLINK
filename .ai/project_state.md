@@ -2,16 +2,16 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-004: Onboarding + Persistent User State
-- **Status**: COMPLETE & VERIFIED (APK assembled, 54/54 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-005: Pig Engine + Single Pig Experience
+- **Status**: COMPLETE & VERIFIED (APK assembled, 68/68 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
 - **Git Version Control**: INITIALIZED & CLEAN
 - **Domain Layer**: VERIFIED (Pure Kotlin, zero UI/Room/Payment leaks, paise Long representation enforced, Math.addExact overflow protection)
-  - Models: `Money`, `Pig`, `Transaction`, `Goal`, `User`
+  - Models: `Money`, `Pig`, `PigState`, `PigProgression`, `PigStateCalculator`, `Transaction`, `Goal`, `User`
   - Repositories: `PigRepository` (with `addSavings` atomic method & `getOrCreateDefaultPig`), `TransactionRepository`, `GoalRepository`, `PaymentRepository`
-  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
+  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`, `GetPrimaryPigUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
 - **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization, DataStore preferences)
   - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao`, `GoalDao`
   - Database: `ClinkDatabase` (`clink.db`, Room v1)
@@ -33,16 +33,17 @@
     - `ClinkTopBar`: Accessible 48dp navigation actions, brand header
     - `ClinkCard`: Standardized surface with subtle border and elevation
     - `ClinkAmountChip`: Accessible chip with active state border, checkmark, and animation
-    - `ClinkPigIllustration`: Compose-native vector mascot with coin slot and shiny gold coin
+    - `ClinkPigIllustration`: Compose-native vector mascot dynamically reflecting `PigState` (`NEW`, `GROWING`, `HEALTHY`, `FULL`)
     - `ClinkSectionHeader`: Section titles with optional action buttons
     - `ClinkEmptyState`: Pig mascot empty state with call-to-action
   - Screens:
     - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
-    - `HomeScreen`: Hero savings card, pig mascot illustration, `PigListItem`, accessible FAB
+    - `HomeScreen`: Hero savings & single pig progression card with tier progress bar, status badge, dynamic mascot, accessible FAB
+    - `PigDetailScreen`: Upgraded to CLINK design system, showing mascot hero, progression status, tier progress bar, detailed metadata card, and actions
     - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA
     - `HistoryScreen`: Transaction cards with credit pills (+₹) and timestamps, empty state
     - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (54 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Testing**: VERIFIED (68 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
   - `MoneyTest.kt` (11/11 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
@@ -55,12 +56,16 @@
   - `OnboardingViewModelTest.kt` (5/5 pass)
   - `MainViewModelTest.kt` (3/3 pass)
   - `SavingsIsolationTest.kt` (1/1 pass)
+  - `PigStateCalculatorTest.kt` (7/7 pass)
+  - `PigProgressionPersistenceTest.kt` (3/3 pass)
+  - `HomeViewModelTest.kt` (2/2 pass)
+  - `PigDetailViewModelTest.kt` (2/2 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - Fresh install launches directly to Onboarding: PASS
-  - Completing onboarding navigates cleanly to Home: PASS
-  - App restart skips onboarding directly to Home: PASS
-  - Savings persistence unaffected across onboarding state toggles: PASS
-  - Light & Dark mode rendering: PASS
-  - Navigation smoke test (Home -> Goals -> History -> Add Money): PASS
-  - Logcat audit: 0 crashes, 0 ANRs, 0 runtime exceptions: PASS
+  - Fresh launch: single pig in `NEW` state (₹0) displayed on Home: PASS
+  - Micro-deposit (₹20): automatically transitions to `GROWING` state with updated mascot: PASS
+  - Pig Detail navigation: displays progression status, milestone bar, summary metadata, and actions: PASS
+  - Navigation back to Home: clean stack transition: PASS
+  - App restart: force-stop and relaunch preserves balance and single pig progression without duplicates: PASS
+  - Dark Mode: clean theme rendering on Home and Pig Detail: PASS
+  - Logcat audit: 0 application crashes, 0 exceptions: PASS

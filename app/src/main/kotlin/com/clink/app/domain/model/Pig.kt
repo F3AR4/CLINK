@@ -13,4 +13,10 @@ data class Pig(
     val colorHex: String = "#E85D75",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    val state: PigState
+        get() = PigStateCalculator.calculate(balance)
+
+    val progression: PigProgression
+        get() = PigStateCalculator.calculateProgression(balance)
+}

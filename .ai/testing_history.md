@@ -1,4 +1,61 @@
 # CLINK Testing History
+ 
+## TASK-005 Pig Engine + Single Pig Experience Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11
+- **Android Studio**: 2026.1.4
+-
+### Automated Tests Executed
+- `.\gradlew.bat test`: **68/68 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `MoneyTest`: 11/11
+  - `AddMoneyUseCaseTest`: 7/7
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `AddMoneyViewModelTest`: 5/5
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4
+  - `ClinkComponentsTest`: 3/3
+  - `UserPreferencesRepositoryTest`: 5/5
+  - `OnboardingUseCasesTest`: 3/3
+  - `OnboardingViewModelTest`: 5/5
+  - `MainViewModelTest`: 3/3
+  - `SavingsIsolationTest`: 1/1
+  - `PigStateCalculatorTest`: 7/7 (Boundary conditions at thresholds, determinism, progression fractions, and domain model integration)
+  - `PigProgressionPersistenceTest`: 3/3 (Initial NEW state, progression across tiers with savings deposits, persistence across repository reload without duplicate pigs)
+  - `HomeViewModelTest`: 2/2 (Idempotent startup and reactive primary pig state emissions)
+  - `PigDetailViewModelTest`: 2/2 (Reactive pig loading by ID and default fallback)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator
+1. **Scenario 1 - Fresh State Launch**:
+   - Cleared data (`pm clear`) and completed onboarding.
+   - Verified Home screen loaded with single primary pig in `NEW` state (`🐣 New`), ₹0 balance, 0% progress bar, and calm illustration. (PASS)
+2. **Scenario 2 - Progression to GROWING**:
+   - Saved ₹20 via Add Money quick chip.
+   - Verified Home screen automatically transitioned to `🌱 Growing` state, ₹20 balance, and 4% milestone progress. (PASS)
+3. **Scenario 3 - Pig Detail Screen Navigation**:
+   - Tapped Primary Pig on Home screen to open `PigDetailScreen`.
+   - Verified CLINK design system rendering: mascot hero, `Growing (🌱 Growing)` badge, balance, progression milestone card with progress bar, detailed metadata summary card, and action buttons. (PASS)
+4. **Scenario 4 - Back Navigation to Home**:
+   - Pressed back button.
+   - Cleanly returned to Home screen without recomposition glitches. (PASS)
+5. **Scenario 5 - Restart Persistence**:
+   - Force-stopped app (`am force-stop`) and relaunched.
+   - Verified Home screen opened directly with ₹20 balance, `GROWING` state, and exactly 1 pig present (0 duplicate pigs). (PASS)
+6. **Scenario 6 - Dark Mode Compatibility**:
+   - Toggled night mode (`cmd uimode night yes`).
+   - Verified readable contrast and dark theme surfaces on Home and Pig Detail.
+   - Reverted night mode (`cmd uimode night no`). (PASS)
+7. **Scenario 7 - Logcat Audit**:
+   - Inspected Logcat for errors or runtime exceptions: 0 errors reported. (PASS)
+
+---
 
 ## TASK-004 Onboarding + Persistent User State Test Record (2026-09-12)
  

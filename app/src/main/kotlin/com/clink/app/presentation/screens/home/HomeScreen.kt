@@ -118,47 +118,115 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
 
-            // Hero Total Savings Card
+            // Hero Total Savings & Pig Progression Card
+            val primaryPig = uiState.primaryPig
+            val progression = primaryPig?.progression
+
             ClinkCard(
                 shape = MaterialTheme.shapes.extraLarge,
                 containerColor = MaterialTheme.colorScheme.surface,
                 elevation = ClinkDimens.current.elevationLevel2
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(ClinkDimens.current.spacingXl),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(ClinkDimens.current.spacingXl)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "TOTAL SAVED",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 1.2.sp
-                        )
-                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
-                        MoneyDisplay(
-                            money = uiState.totalBalance,
-                            fontSize = MaterialTheme.typography.displayMedium.fontSize,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
-                        Text(
-                            text = "Save tiny. Build habits. Clink!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm)
+                            ) {
+                                Text(
+                                    text = (primaryPig?.name ?: "PRIMARY PIG").uppercase(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    letterSpacing = 1.2.sp
+                                )
+                                Text(
+                                    text = primaryPig?.state?.badgeLabel ?: "🐣 New",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.extraSmall)
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+                            MoneyDisplay(
+                                money = uiState.totalBalance,
+                                fontSize = MaterialTheme.typography.displayMedium.fontSize,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+                            Text(
+                                text = primaryPig?.state?.description ?: "Save tiny. Build habits. Clink!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(ClinkDimens.current.spacingMd))
+
+                        // Mascot Illustration reflecting current PigState
+                        ClinkPigIllustration(
+                            size = 84.dp,
+                            state = primaryPig?.state ?: com.clink.app.domain.model.PigState.NEW,
+                            contentDescription = "Pig is ${primaryPig?.state?.displayName ?: "New"}"
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(ClinkDimens.current.spacingMd))
+                    // Pig Progression Tier Bar
+                    if (progression != null) {
+                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { progression.progressToNextTier },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(MaterialTheme.shapes.small),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            val nextMilestoneText = if (progression.nextThreshold != null) {
+                                val targetName = when (progression.state) {
+                                    com.clink.app.domain.model.PigState.NEW,
+                                    com.clink.app.domain.model.PigState.GROWING -> "Healthy Pig"
+                                    com.clink.app.domain.model.PigState.HEALTHY -> "Full Pig"
+                                    com.clink.app.domain.model.PigState.FULL -> "Max Tier"
+                                }
+                                "${(progression.progressToNextTier * 100).toInt()}% • Next: ${progression.nextThreshold.formatDisplay()} ($targetName)"
+                            } else {
+                                "🏆 Max Tier Achieved!"
+                            }
 
-                    // Mascot Illustration
-                    ClinkPigIllustration(
-                        size = 76.dp
-                    )
+                            Text(
+                                text = nextMilestoneText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Text(
+                                text = "${uiState.totalBalance.formatDisplay()} saved",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
             }
 
@@ -166,8 +234,8 @@ fun HomeScreen(
 
             // Section Header
             ClinkSectionHeader(
-                title = "Your Piggy Banks",
-                subtitle = "Where your micro-savings live"
+                title = "Your Piggy Bank",
+                subtitle = "Tap to view details and progression"
             )
 
             Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
@@ -223,21 +291,34 @@ fun PigListItem(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                ClinkPigIllustration(size = 40.dp)
+                ClinkPigIllustration(
+                    size = 42.dp,
+                    state = pig.state
+                )
             }
 
             Spacer(modifier = Modifier.width(ClinkDimens.current.spacingLg))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = pig.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = pig.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = pig.state.badgeLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Tap to view details",
+                    text = "Tap to view progression",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

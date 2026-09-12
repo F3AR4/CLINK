@@ -144,6 +144,53 @@
      - Test D (Savings Preservation): Added ₹20 savings, force-stopped and relaunched, verified balance remained ₹20 and Onboarding remained skipped.
      - Test E (Dark Mode): Toggled dark mode via `cmd uimode night yes`, verified clean UI rendering.
      - Navigation Smoke Test: Verified transitions between Home, Goals, History, and Add Money.
-     - Logcat Audit: 0 crashes, 0 ANRs, 0 runtime exceptions.
+- **Status**: COMPLETE & VERIFIED
+ 
+## TASK-005: Pig Engine + Single Pig Experience
+- **Date**: 2026-09-12
+- **Goal**: Turn the single primary pig into a meaningful product entity with deterministic progression states derived from savings, reactive Home & Pig Detail presentations, visual progression in mascot illustrations, and full test & runtime verification.
+- **Actions Taken**:
+  1. Domain Progression Engine:
+     - Created `PigState` enum (`NEW`, `GROWING`, `HEALTHY`, `FULL`) with human-friendly display names, badge labels, and descriptions.
+     - Created `PigProgression` data class containing state, current balance, next threshold milestone, and normalized progress fraction [0.0f..1.0f].
+     - Implemented `PigStateCalculator` centralizing deterministic rules using `Money` thresholds (`THRESHOLD_HEALTHY = ₹500`, `THRESHOLD_FULL = ₹2,000`).
+     - Added derived properties `state` and `progression` to `Pig` domain model (0 database schema churn).
+     - Created `GetPrimaryPigUseCase` and registered it in `UseCaseModule`.
+  2. Mascot Illustration Visual Progression:
+     - Updated `ClinkPigIllustration` with `state: PigState` parameter.
+     - Pure Compose Canvas vector rendering for each tier:
+       - `NEW`: Innocent round calm eyes, empty slot ready for coin, soft blush.
+       - `GROWING`: Enthusiastic open eyes with catchlights, gold coin peeking with gleam, rosy blush.
+       - `HEALTHY`: Joyous curved eye arcs (^ ^), shiny coin with double gleam, sparkle star accent.
+       - `FULL`: Celebratory wink & smile (> ^), golden crown atop head, gleaming coin, chubby celebratory cheeks.
+  3. Presentation Layer Upgrades:
+     - Updated `HomeViewModel` to expose `primaryPig: Pig?` in `HomeUiState`.
+     - Enhanced `HomeScreen`:
+       - Hero Card displays pig name, status badge, balance, dynamic mascot illustration, and tier progress bar towards next milestone.
+       - `PigListItem` displays state badge and matching mascot icon.
+       - Tap on pig navigates to `PigDetailScreen`.
+     - Upgraded `PigDetailScreen` to CLINK design system:
+       - Mascot hero with current state expression.
+       - Status badge and balance.
+       - Progression status card with tier milestone bar.
+       - Detailed summary card (Status, Current Balance, Target, Created Date).
+       - Accessible action buttons ("Add Savings", "View Saving History").
+  4. Automated Testing (14 new unit tests, 68 total):
+     - Added `PigStateCalculatorTest` (7 tests): boundary conditions (threshold ± 1 paise), determinism, progress fractions, and domain model delegation.
+     - Added `PigProgressionPersistenceTest` (3 tests): verified initial `NEW` state, sequential savings progressing across `GROWING` -> `HEALTHY` -> `FULL`, and persistence across repository reload without duplicate pigs.
+     - Added `HomeViewModelTest` (2 tests): verifies idempotent init and reactive primary pig state emissions.
+     - Added `PigDetailViewModelTest` (2 tests): verifies reactive pig loading by ID and fallback to primary.
+     - Total unit tests: 68/68 PASS (0 failures, 100% pass rate).
+  5. Build & Static Analysis:
+     - `.\gradlew.bat assembleDebug`: SUCCESS.
+     - `.\gradlew.bat lint`: 0 errors, 0 warnings.
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Fresh state launch: single pig displayed on Home in `NEW` state with ₹0.
+     - Save ₹20: automatically updated Home UI to `🌱 Growing` state and 4% progress.
+     - Navigation to Pig Detail: verified progression status, tier milestone, metadata, and actions.
+     - Navigation back to Home: verified smooth back stack pop.
+     - App restart persistence: force-stop and relaunch retained balance (₹20) and `GROWING` state without duplicates.
+     - Dark mode: verified light/dark theme contrast.
+     - Logcat audit: 0 application crashes, 0 runtime exceptions.
 - **Status**: COMPLETE & VERIFIED
 

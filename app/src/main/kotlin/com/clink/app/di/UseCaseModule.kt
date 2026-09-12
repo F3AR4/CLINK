@@ -52,5 +52,13 @@ object UseCaseModule {
     ): CompleteOnboardingUseCase {
         return CompleteOnboardingUseCase(userPreferencesRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideGetPrimaryPigUseCase(
+        pigRepository: PigRepository
+    ): com.clink.app.domain.usecase.GetPrimaryPigUseCase {
+        return com.clink.app.domain.usecase.GetPrimaryPigUseCase(pigRepository)
+    }
 }
 

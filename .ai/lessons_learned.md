@@ -39,3 +39,8 @@
 12. **Financial Data Isolation**:
    - Application lifecycle flags (like onboarding completion) must be strictly isolated in preferences (DataStore) away from SQLite/Room financial tables.
    - Toggling onboarding completion states must never touch, modify, or drop pigs, balances, or transactions.
+13. **Testing `SharingStarted.WhileSubscribed` StateFlows**:
+   - When ViewModels configure `stateIn(SharingStarted.WhileSubscribed(...))`, the upstream flow is only activated when there is at least one active collector.
+   - In unit tests asserting on `viewModel.uiState.value`, always launch a collection job in the test's `backgroundScope`:
+     `backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }`
+     prior to advancing the test dispatcher. This ensures the upstream flow emits and produces the updated state without hanging.

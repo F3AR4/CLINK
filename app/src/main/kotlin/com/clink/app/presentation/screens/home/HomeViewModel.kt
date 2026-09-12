@@ -17,6 +17,7 @@ import javax.inject.Inject
 data class HomeUiState(
     val isLoading: Boolean = true,
     val pigs: List<Pig> = emptyList(),
+    val primaryPig: Pig? = null,
     val totalBalance: Money = Money.ZERO
 )
 
@@ -28,10 +29,12 @@ class HomeViewModel @Inject constructor(
 
     val uiState: StateFlow<HomeUiState> = pigRepository.getAllPigs()
         .map { pigs ->
+            val primary = pigs.firstOrNull()
             val totalPaise = pigs.sumOf { it.balance.paise }
             HomeUiState(
                 isLoading = false,
                 pigs = pigs,
+                primaryPig = primary,
                 totalBalance = Money(totalPaise)
             )
         }
