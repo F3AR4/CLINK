@@ -1,5 +1,6 @@
 package com.clink.app.di
 
+import com.clink.app.data.preferences.UserPreferencesRepository as UserPreferencesRepositoryImpl
 import com.clink.app.data.repository.FakePaymentRepository
 import com.clink.app.data.repository.GoalRepositoryImpl
 import com.clink.app.data.repository.PigRepositoryImpl
@@ -8,6 +9,7 @@ import com.clink.app.domain.repository.GoalRepository
 import com.clink.app.domain.repository.PaymentRepository
 import com.clink.app.domain.repository.PigRepository
 import com.clink.app.domain.repository.TransactionRepository
+import com.clink.app.domain.repository.UserPreferencesRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -33,4 +35,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPaymentRepository(impl: FakePaymentRepository): PaymentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserPreferencesRepository(impl: UserPreferencesRepositoryImpl): UserPreferencesRepository
 }
+

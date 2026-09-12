@@ -2,6 +2,35 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-004] - Onboarding + Persistent User State
+
+### Added
+- Domain Layer:
+  - `UserPreferencesRepository` domain interface for observing and persisting user app preferences.
+  - `GetOnboardingStateUseCase` observing `Flow<Boolean>`.
+  - `CompleteOnboardingUseCase` persisting onboarding completion.
+- Data Layer:
+  - `UserPreferencesRepositoryImpl` implementing domain interface with `IOException` recovery and `runCatching` safe writes.
+- Dependency Injection:
+  - Repository binding in `RepositoryModule`.
+  - Use cases in `UseCaseModule`.
+- Presentation Layer:
+  - `MainViewModel` and `MainUiState` managing startup routing and splash screen state.
+  - Branded startup splash screen in `MainActivity` eliminating route flashes.
+  - `OnboardingViewModel` with `OnboardingUiState` and synchronous double-tap suppression.
+  - Complete redesign of `OnboardingScreen` using CLINK design system (`ClinkPigIllustration`, `ClinkCard`, `ClinkButton`, `ClinkDimens.current`, value propositions, Light & Dark themes).
+- Unit Tests (17 new tests, 54 total):
+  - `UserPreferencesRepositoryTest` (5 tests).
+  - `OnboardingUseCasesTest` (3 tests).
+  - `OnboardingViewModelTest` (5 tests).
+  - `MainViewModelTest` (3 tests).
+  - `SavingsIsolationTest` (1 test).
+
+### Changed
+- `MainActivity.kt`: Now observes `MainViewModel.uiState` to decide between Splash, Onboarding, or Home.
+- `OnboardingScreen.kt`: Replaced basic text layout with branded design system cards, illustration, and button.
+- `UserPreferencesRepository.kt` moved/refactored to cleanly separate domain interface from data layer implementation.
+
 ## [TASK-003] - Design System + Branding
 
 ### Added

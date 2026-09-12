@@ -1,9 +1,9 @@
 # CLINK Current Project State
 
-- **Last Updated**: 2026-09-09
+- **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-003: Design System + Branding
-- **Status**: COMPLETE & VERIFIED (APK assembled, 37/37 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-004: Onboarding + Persistent User State
+- **Status**: COMPLETE & VERIFIED (APK assembled, 54/54 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -11,15 +11,16 @@
 - **Domain Layer**: VERIFIED (Pure Kotlin, zero UI/Room/Payment leaks, paise Long representation enforced, Math.addExact overflow protection)
   - Models: `Money`, `Pig`, `Transaction`, `Goal`, `User`
   - Repositories: `PigRepository` (with `addSavings` atomic method & `getOrCreateDefaultPig`), `TransactionRepository`, `GoalRepository`, `PaymentRepository`
-  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`
-- **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization)
+  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
+- **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization, DataStore preferences)
   - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao`, `GoalDao`
   - Database: `ClinkDatabase` (`clink.db`, Room v1)
-  - Preferences: `UserPreferencesRepository` (DataStore)
-  - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `FakePaymentRepository`
+  - Preferences: `UserPreferencesRepository` (DataStore with IO error recovery and clean domain abstraction)
+  - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `UserPreferencesRepositoryImpl`, `FakePaymentRepository`
 - **Dependency Injection**: VERIFIED (Hilt 2.54 modules compile and inject dependencies)
   - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule`
 - **Presentation Layer**: VERIFIED (Material 3 CLINK Design System + Brand Identity)
+  - Root Activity & Routing: `MainActivity` with `MainViewModel` (state-driven splash/destination routing eliminating screen flicker)
   - Design Tokens:
     - Colors: Light and Dark semantic palette (`ClinkPink`, `ClinkNavy`, `ClinkTeal`, `CoinGold`, `PiggyBlush`, `SuccessGreen`, `ErrorRed`, accessible surface/background colors)
     - Typography Scale: Display, Headline, Title, Body, Label
@@ -35,12 +36,13 @@
     - `ClinkPigIllustration`: Compose-native vector mascot with coin slot and shiny gold coin
     - `ClinkSectionHeader`: Section titles with optional action buttons
     - `ClinkEmptyState`: Pig mascot empty state with call-to-action
-  - Screen Upgrades:
+  - Screens:
+    - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
     - `HomeScreen`: Hero savings card, pig mascot illustration, `PigListItem`, accessible FAB
     - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA
     - `HistoryScreen`: Transaction cards with credit pills (+₹) and timestamps, empty state
     - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (37 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Testing**: VERIFIED (54 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
   - `MoneyTest.kt` (11/11 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
@@ -48,12 +50,17 @@
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
   - `ClinkThemeTest.kt` (4/4 pass)
   - `ClinkComponentsTest.kt` (3/3 pass)
+  - `UserPreferencesRepositoryTest.kt` (5/5 pass)
+  - `OnboardingUseCasesTest.kt` (3/3 pass)
+  - `OnboardingViewModelTest.kt` (5/5 pass)
+  - `MainViewModelTest.kt` (3/3 pass)
+  - `SavingsIsolationTest.kt` (1/1 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - App install & launch: SUCCESS
-  - Design system rendering in Light Mode: SUCCESS (Hero card, Mascot vector, quick chips, top bar)
-  - Sequential micro-savings: ₹100 -> ₹120 (balance and Room persistence verified)
-  - Transaction history screen: Rendered transactions in ClinkCards with credit badges
-  - Goals screen: Rendered ClinkEmptyState with mascot
-  - Dark Mode toggle: Verified contrast and dark theme surfaces via `cmd uimode night yes`
-  - Logcat audit: 0 application crashes, 0 ANRs
+  - Fresh install launches directly to Onboarding: PASS
+  - Completing onboarding navigates cleanly to Home: PASS
+  - App restart skips onboarding directly to Home: PASS
+  - Savings persistence unaffected across onboarding state toggles: PASS
+  - Light & Dark mode rendering: PASS
+  - Navigation smoke test (Home -> Goals -> History -> Add Money): PASS
+  - Logcat audit: 0 crashes, 0 ANRs, 0 runtime exceptions: PASS

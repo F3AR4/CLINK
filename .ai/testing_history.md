@@ -1,5 +1,64 @@
 # CLINK Testing History
 
+## TASK-004 Onboarding + Persistent User State Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11
+- **Android Studio**: 2026.1.4
+-
+### Automated Tests Executed
+- `.\gradlew.bat test`: **54/54 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `MoneyTest`: 11/11
+  - `AddMoneyUseCaseTest`: 7/7
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `AddMoneyViewModelTest`: 5/5
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4
+  - `ClinkComponentsTest`: 3/3
+  - `UserPreferencesRepositoryTest`: 5/5 (Default false, write & reload across instances, corrupt state recovery, write error handling, toggle idempotence)
+  - `OnboardingUseCasesTest`: 3/3 (Get state flow, complete success, complete failure propagation)
+  - `OnboardingViewModelTest`: 5/5 (Initial state, successful completion, rapid double-tap suppression, failure state, error reset)
+  - `MainViewModelTest`: 3/3 (Incomplete -> Onboarding route, Complete -> Home route, IO fallback to Onboarding)
+  - `SavingsIsolationTest`: 1/1 (Room tables, pigs, transactions, balances unchanged by onboarding DataStore writes)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator
+1. **Scenario A - Fresh Install Launch**:
+   - `adb shell pm clear com.clink.app` executed to erase all local data.
+   - Launched `com.clink.app/.MainActivity`.
+   - Result: App routed cleanly to `OnboardingScreen` without flashing `HomeScreen`. Pig mascot, value proposition cards, and "Start Saving" CTA button displayed. **PASS**
+2. **Scenario B - Complete Onboarding**:
+   - Tapped "Start Saving" CTA button.
+   - Result: Button showed loading state, persisted `isOnboardingCompleted = true` into DataStore, and navigated smoothly to `HomeScreen`. **PASS**
+3. **Scenario C - App Restart Persistence**:
+   - `adb shell am force-stop com.clink.app` executed.
+   - Relaunched `com.clink.app/.MainActivity`.
+   - Result: App bypassed `OnboardingScreen` completely and opened directly into `HomeScreen`. **PASS**
+4. **Scenario D - Savings Isolation & Data Integrity**:
+   - Navigated to `AddMoneyScreen`, selected ₹20, tapped "Clink It! 🐷".
+   - Home screen displayed `Total Saved: ₹ 20`.
+   - Force-stopped app and relaunched.
+   - Result: Home screen retained `Total Saved: ₹ 20` and `OnboardingScreen` remained bypassed. **PASS**
+5. **Scenario E - Theme Compatibility (Dark Mode)**:
+   - Enabled night mode via `cmd uimode night yes`.
+   - Result: Verified dark theme contrast and readable card surfaces on Onboarding and Home screens.
+   - Reverted night mode via `cmd uimode night no`. **PASS**
+6. **Navigation Smoke Test**:
+   - Tapped Goals icon: Navigated to `Goals` screen. Back button returned to Home.
+   - Tapped History icon: Navigated to `History` screen. Back button returned to Home.
+   - Tapped Add Savings FAB: Navigated to `AddMoney` screen. Back button returned to Home.
+   - Result: **PASS**
+7. **Logcat & Stability Audit**:
+   - Filtered for crashes/errors: 0 fatal exceptions, 0 Room errors, 0 Compose crashes. **PASS**
+
+---
+
 ## TASK-003 Design System + Branding Test Record (2026-09-09)
 
 ### Environment

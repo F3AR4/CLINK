@@ -106,4 +106,44 @@
        - Transaction history audit.
        - Clean logcat (0 crashes, 0 ANRs).
 - **Status**: COMPLETE & VERIFIED
+ 
+## TASK-004: Onboarding + Persistent User State
+- **Date**: 2026-09-12
+- **Goal**: Implement a clean first-launch onboarding experience for CLINK with persistent local user state stored in DataStore, seamless startup routing without screen flashes, zero impact on existing savings data, and full test/runtime verification.
+- **Actions Taken**:
+  1. Domain Layer:
+     - Defined `UserPreferencesRepository` interface with `isOnboardingCompleted: Flow<Boolean>` and `suspend fun setOnboardingCompleted(completed: Boolean): Result<Unit>`.
+     - Created `GetOnboardingStateUseCase` observing completion state.
+     - Created `CompleteOnboardingUseCase` updating completion state.
+  2. Data Layer:
+     - Updated `UserPreferencesRepositoryImpl` to implement the domain interface.
+     - Protected DataStore reading with `.catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }`.
+     - Wrapped DataStore writes in `runCatching` returning domain `Result<Unit>`.
+  3. Dependency Injection:
+     - Bound `UserPreferencesRepositoryImpl` to domain interface in `RepositoryModule`.
+     - Provided `GetOnboardingStateUseCase` and `CompleteOnboardingUseCase` in `UseCaseModule`.
+  4. Presentation & Routing:
+     - Created `MainViewModel` managing `MainUiState.Loading` vs `MainUiState.Ready(startDestination)`.
+     - Updated `MainActivity` to render a branded splash state (`ClinkPigIllustration` + title) while loading, avoiding any screen flickering or wrong route flashes.
+     - Created `OnboardingViewModel` with `OnboardingUiState` (`Idle`, `Completing`, `Success`, `Error`) and synchronous double-tap protection.
+     - Completely redesigned `OnboardingScreen` using the CLINK design system (`ClinkPigIllustration`, `ClinkCard`, `ClinkButton`, `ClinkDimens.current`), clear value proposition cards, minimum 48dp touch targets, and full Dark/Light mode support.
+  5. Automated Testing:
+     - Added `UserPreferencesRepositoryTest` (5 unit tests) validating default false, persistence across reloads, error recovery, and failure handling.
+     - Added `OnboardingUseCasesTest` (3 unit tests) validating get and complete use cases.
+     - Added `OnboardingViewModelTest` (5 unit tests) validating initial state, successful completion, rapid double-tap suppression, and error handling.
+     - Added `MainViewModelTest` (3 unit tests) validating route resolution (incomplete -> Onboarding, complete -> Home, and error fallback).
+     - Added `SavingsIsolationTest` (1 unit test) guaranteeing onboarding completion transitions never touch Room pigs, balances, or transactions.
+     - Total unit test count increased from 37 to 54. All 54 tests pass (100%).
+  6. Static Analysis & Build:
+     - `.\gradlew.bat assembleDebug`: SUCCESS.
+     - `.\gradlew.bat lint`: 0 errors, 0 warnings.
+  7. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Test A (Fresh launch after `pm clear`): App launched directly into Onboarding.
+     - Test B (Complete Onboarding): Tapped "Start Saving", navigated smoothly to Home screen.
+     - Test C (App Restart): Force-stopped and relaunched, opened directly into Home screen, Onboarding skipped.
+     - Test D (Savings Preservation): Added ₹20 savings, force-stopped and relaunched, verified balance remained ₹20 and Onboarding remained skipped.
+     - Test E (Dark Mode): Toggled dark mode via `cmd uimode night yes`, verified clean UI rendering.
+     - Navigation Smoke Test: Verified transitions between Home, Goals, History, and Add Money.
+     - Logcat Audit: 0 crashes, 0 ANRs, 0 runtime exceptions.
+- **Status**: COMPLETE & VERIFIED
 

@@ -30,3 +30,12 @@
    - All interactive components (buttons, chips, icon toggles) should guarantee a minimum touch target size of 48.dp (`LocalDimensions.current.minTouchTarget`).
    - Typography `letterSpacing` in Compose takes `TextUnit` (e.g. `1.2.sp`) rather than raw floats or numeric arguments.
    - Using `String.format(Locale.getDefault(), ...)` prevents lint `DefaultLocale` warnings while correctly formatting currency numbers according to user locale.
+10. **DataStore Concurrent Access in Unit Tests**:
+   - Multiple `DataStore` instances pointing to the same file in the same process throw `IllegalStateException` unless the first instance's scope is cancelled.
+   - In tests verifying persistence across repository instances, create `ds1` in a dedicated `CoroutineScope(job1)` and call `job1.cancel()` before creating `ds2`.
+11. **Testing Onboarding StateFlow with StandardTestDispatcher**:
+   - When ViewModels use `stateIn(started = SharingStarted.Eagerly)`, `testDispatcher.scheduler.advanceUntilIdle()` must be called to ensure mock flow emissions are processed before asserting state.
+   - Using a backing `MutableStateFlow` in tests avoids missed single-shot emissions.
+12. **Financial Data Isolation**:
+   - Application lifecycle flags (like onboarding completion) must be strictly isolated in preferences (DataStore) away from SQLite/Room financial tables.
+   - Toggling onboarding completion states must never touch, modify, or drop pigs, balances, or transactions.

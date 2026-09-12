@@ -22,19 +22,21 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-003 Complete)
+## 4. Current State (TASK-004 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
-- Material 3 Design System and Brand Identity established:
-  - Tokens: Dimensions (`LocalDimensions`), Motion, Color (Light & Dark mode), Shape, Type.
-  - Components: `MoneyDisplay`, `ClinkButton`, `ClinkOutlinedButton`, `ClinkTopBar`, `ClinkCard`, `ClinkAmountChip`, `ClinkPigIllustration`, `ClinkSectionHeader`, `ClinkEmptyState`.
-  - Screen upgrades: `HomeScreen`, `AddMoneyScreen`, `HistoryScreen`, `GoalScreen`.
+- Material 3 Design System and Brand Identity established.
+- First-launch Onboarding & Persistent User State implemented & verified:
+  - DataStore Preferences for user app lifecycle flags (`isOnboardingCompleted`).
+  - `MainViewModel` startup splash / initial destination routing eliminating screen flicker.
+  - Value propositions & mascot onboarding UI with rapid double-tap suppression.
+  - Strict isolation: Onboarding lifecycle changes never impact Room savings, balances, or transactions.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat test` verified (37 tests, 0 failures, 100% PASS).
+  - Unit Tests: `.\gradlew.bat test` verified (54 tests, 0 failures, 100% PASS).
   - Static Analysis: `.\gradlew.bat lint` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Dark mode tested.
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Dark mode tested, full navigation smoke test passed.
 
