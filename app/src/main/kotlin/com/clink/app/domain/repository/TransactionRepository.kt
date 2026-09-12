@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface TransactionRepository {
     fun getTransactionsForPig(pigId: Long): Flow<List<Transaction>>
     fun getAllTransactions(): Flow<List<Transaction>>
+    fun observeTransactions(pigId: Long): Flow<List<Transaction>> = getTransactionsForPig(pigId)
     suspend fun recordTransaction(transaction: Transaction): Long
     suspend fun getTransactionById(id: Long): Transaction?
 }

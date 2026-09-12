@@ -67,3 +67,7 @@ ksp/
 # Backup files
 *.bak
 *~
+
+# Scratch files
+scratch/
+

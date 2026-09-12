@@ -31,12 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.clink.app.domain.model.Transaction
 import com.clink.app.domain.model.TransactionType
-import com.clink.app.domain.repository.TransactionRepository
+import com.clink.app.domain.usecase.GetTransactionsUseCase
 import com.clink.app.presentation.components.ClinkCard
 import com.clink.app.presentation.components.ClinkEmptyState
 import com.clink.app.presentation.components.ClinkTopBar
@@ -53,9 +54,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    transactionRepository: TransactionRepository
+    getTransactionsUseCase: GetTransactionsUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    val transactions: StateFlow<List<Transaction>> = transactionRepository.getAllTransactions()
+    private val pigId: Long? = savedStateHandle.get<String>("pigId")?.toLongOrNull()
+
+    val transactions: StateFlow<List<Transaction>> = getTransactionsUseCase(pigId)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

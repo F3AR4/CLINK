@@ -14,6 +14,7 @@ import com.clink.app.domain.model.TransactionType
 import com.clink.app.domain.repository.PigRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -63,6 +64,8 @@ class PigRepositoryImpl @Inject constructor(
      * within a single Room database transaction.
      */
     override suspend fun addSavings(pigId: Long, amount: Money, note: String): Transaction {
+        require(amount.isPositive) { "Savings amount must be greater than zero paise" }
+
         @Suppress("UNCHECKED_CAST")
         return transactionRunner {
             val pigEntity = pigDao.getPigByIdOnce(pigId)
@@ -71,10 +74,13 @@ class PigRepositoryImpl @Inject constructor(
             val currentBalance = Money(pigEntity.balancePaise)
             val newBalance = currentBalance + amount // Math.addExact prevents overflow
 
+            val committedAt = System.currentTimeMillis()
+            val cleanNote = note.trim().ifEmpty { "Clink savings" }
+
             pigDao.updateBalance(
                 id = pigId,
                 balancePaise = newBalance.paise,
-                updatedAt = System.currentTimeMillis()
+                updatedAt = committedAt
             )
 
             val txEntity = TransactionEntity(
@@ -82,22 +88,24 @@ class PigRepositoryImpl @Inject constructor(
                 amountPaise = amount.paise,
                 type = TransactionType.CREDIT.name,
                 status = TransactionStatus.COMPLETED.name,
-                note = note,
-                timestamp = System.currentTimeMillis()
+                note = cleanNote,
+                timestamp = committedAt
             )
             val txId = transactionDao.insertTransaction(txEntity)
             txEntity.copy(id = txId).toDomain()
         } as Transaction
     }
 
+    private val initMutex = kotlinx.coroutines.sync.Mutex()
+
     /**
      * Retrieves the default/first Pig, or initializes one if none exist.
      * Guarantees idempotent startup without creating duplicate pigs on app launch/restart.
      */
-    override suspend fun getOrCreateDefaultPig(): Pig {
+    override suspend fun getOrCreateDefaultPig(): Pig = initMutex.withLock {
         val existing = pigDao.getFirstPig()
         if (existing != null) {
-            return existing.toDomain()
+            return@withLock existing.toDomain()
         }
 
         val defaultPig = Pig(
@@ -108,6 +116,6 @@ class PigRepositoryImpl @Inject constructor(
             colorHex = "#E85D75"
         )
         val generatedId = pigDao.insertPig(PigEntity.fromDomain(defaultPig))
-        return defaultPig.copy(id = generatedId)
+        defaultPig.copy(id = generatedId)
     }
 }

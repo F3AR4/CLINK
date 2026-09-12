@@ -2,23 +2,23 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-005: Pig Engine + Single Pig Experience
-- **Status**: COMPLETE & VERIFIED (APK assembled, 68/68 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-006: Transaction Engine
+- **Status**: COMPLETE & VERIFIED (APK assembled, 82/82 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
 - **Git Version Control**: INITIALIZED & CLEAN
 - **Domain Layer**: VERIFIED (Pure Kotlin, zero UI/Room/Payment leaks, paise Long representation enforced, Math.addExact overflow protection)
-  - Models: `Money`, `Pig`, `PigState`, `PigProgression`, `PigStateCalculator`, `Transaction`, `Goal`, `User`
-  - Repositories: `PigRepository` (with `addSavings` atomic method & `getOrCreateDefaultPig`), `TransactionRepository`, `GoalRepository`, `PaymentRepository`
-  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetPigSummaryUseCase`, `GetPrimaryPigUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
-- **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization, DataStore preferences)
-  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao`, `GoalDao`
+  - Models: `Money` (with `isPositive` and `isZero` helpers), `Pig`, `PigState`, `PigProgression`, `PigStateCalculator`, `Transaction`, `Goal`, `User`
+  - Repositories: `PigRepository` (with `addSavings` atomic method & thread-safe `getOrCreateDefaultPig`), `TransactionRepository` (with `observeTransactions`), `GoalRepository`, `PaymentRepository`
+  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetTransactionsUseCase` (clean domain boundary for transaction history), `GetPigSummaryUseCase`, `GetPrimaryPigUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
+- **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization via Mutex, DataStore preferences)
+  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao` (deterministic secondary ordering: `ORDER BY timestamp DESC, id DESC`), `GoalDao`
   - Database: `ClinkDatabase` (`clink.db`, Room v1)
   - Preferences: `UserPreferencesRepository` (DataStore with IO error recovery and clean domain abstraction)
-  - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `UserPreferencesRepositoryImpl`, `FakePaymentRepository`
+  - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`, unified single committed timestamp, note trimming and sanitization, mutex-guarded default pig creation), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `UserPreferencesRepositoryImpl`, `FakePaymentRepository`
 - **Dependency Injection**: VERIFIED (Hilt 2.54 modules compile and inject dependencies)
-  - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule`
+  - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule` (providing `GetTransactionsUseCase`)
 - **Presentation Layer**: VERIFIED (Material 3 CLINK Design System + Brand Identity)
   - Root Activity & Routing: `MainActivity` with `MainViewModel` (state-driven splash/destination routing eliminating screen flicker)
   - Design Tokens:
@@ -40,14 +40,18 @@
     - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
     - `HomeScreen`: Hero savings & single pig progression card with tier progress bar, status badge, dynamic mascot, accessible FAB
     - `PigDetailScreen`: Upgraded to CLINK design system, showing mascot hero, progression status, tier progress bar, detailed metadata card, and actions
-    - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA
-    - `HistoryScreen`: Transaction cards with credit pills (+₹) and timestamps, empty state
+    - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA with `isProcessing` lock out preventing post-success rapid double taps
+    - `HistoryScreen`: Powered by `HistoryViewModel` injecting `GetTransactionsUseCase`, displaying newest-first transactions with credit pills (+₹) and formatted timestamps
     - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (68 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Testing**: VERIFIED (82 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
   - `MoneyTest.kt` (11/11 pass)
+  - `TransactionDomainTest.kt` (3/3 pass) [NEW]
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
+  - `GetTransactionsUseCaseTest.kt` (2/2 pass) [NEW]
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
+  - `TransactionAtomicityTest.kt` (7/7 pass) [NEW]
   - `AddMoneyViewModelTest.kt` (5/5 pass)
+  - `HistoryViewModelTest.kt` (2/2 pass) [NEW]
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
   - `ClinkThemeTest.kt` (4/4 pass)
   - `ClinkComponentsTest.kt` (3/3 pass)
@@ -62,10 +66,11 @@
   - `PigDetailViewModelTest.kt` (2/2 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - Fresh launch: single pig in `NEW` state (₹0) displayed on Home: PASS
-  - Micro-deposit (₹20): automatically transitions to `GROWING` state with updated mascot: PASS
-  - Pig Detail navigation: displays progression status, milestone bar, summary metadata, and actions: PASS
-  - Navigation back to Home: clean stack transition: PASS
-  - App restart: force-stop and relaunch preserves balance and single pig progression without duplicates: PASS
-  - Dark Mode: clean theme rendering on Home and Pig Detail: PASS
-  - Logcat audit: 0 application crashes, 0 exceptions: PASS
+  - Scenario A: Fresh save ₹10 -> balance ₹10, exactly 1 transaction: PASS
+  - Scenario B: Save ₹20 -> balance ₹30, exactly 2 transactions: PASS
+  - Scenario C: Save ₹50 -> balance ₹80, exactly 3 transactions: PASS
+  - Scenario D: App restart -> balance ₹80, 3 transactions preserved without duplicates: PASS
+  - Scenario E: Rapid repeated save taps -> exactly 1 transaction recorded per user action: PASS
+  - Scenario F: Saving History UI -> transactions loaded via `GetTransactionsUseCase` ordered newest first: PASS
+  - Scenario G: Dark mode -> night mode toggled cleanly without rendering/theme flaws: PASS
+  - Scenario H: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS

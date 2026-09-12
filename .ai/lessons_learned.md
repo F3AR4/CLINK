@@ -44,3 +44,9 @@
    - In unit tests asserting on `viewModel.uiState.value`, always launch a collection job in the test's `backgroundScope`:
      `backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }`
      prior to advancing the test dispatcher. This ensures the upstream flow emits and produces the updated state without hanging.
+14. **Concurrent Startup Initialization (`Mutex.withLock`)**:
+   - When multiple ViewModels or use cases start simultaneously on app cold launch (e.g. `MainViewModel`, `HomeViewModel`, `GetPrimaryPigUseCase`), non-synchronized checks like `if (pigDao.getFirstPig() == null)` can execute concurrently before the first insert commits, causing multiple initial entities.
+   - Protecting default entity creation with `Mutex.withLock` guarantees strictly idempotent single-entity creation across all concurrent coroutines.
+15. **Post-Success Click Lockout in Interactive Flows**:
+   - Guarding against rapid double-taps only while `isLoading` allows extra taps after a fast local operation completes (e.g. state transitions to `Success`) before the UI navigation transition pops the back stack.
+   - Introducing `isProcessing: Boolean get() = saveStatus is SaveStatus.Saving || saveStatus is SaveStatus.Success` and binding Compose button `enabled = !isProcessing` locks out subsequent taps for the entire remaining lifetime of that screen.

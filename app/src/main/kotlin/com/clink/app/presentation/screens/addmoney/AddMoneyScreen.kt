@@ -161,7 +161,7 @@ fun AddMoneyScreen(
             ClinkButton(
                 text = if (uiState.isLoading) "Clinking..." else "Clink It! 🐷",
                 onClick = { viewModel.onAddMoney() },
-                enabled = !uiState.isLoading,
+                enabled = !uiState.isProcessing,
                 isLoading = uiState.isLoading
             )
 

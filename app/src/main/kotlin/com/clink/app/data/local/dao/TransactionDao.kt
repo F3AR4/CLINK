@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
-    @Query("SELECT * FROM transactions WHERE pigId = :pigId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM transactions WHERE pigId = :pigId ORDER BY timestamp DESC, id DESC")
     fun getTransactionsForPig(pigId: Long): Flow<List<TransactionEntity>>
 
-    @Query("SELECT * FROM transactions ORDER BY timestamp DESC")
+    @Query("SELECT * FROM transactions ORDER BY timestamp DESC, id DESC")
     fun getAllTransactions(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE id = :id")

@@ -194,3 +194,43 @@
      - Logcat audit: 0 application crashes, 0 runtime exceptions.
 - **Status**: COMPLETE & VERIFIED
 
+### TASK-006: Transaction Engine Hardening
+- **Date**: 2026-09-12
+- **Goal**: Harden the CLINK Transaction Engine into an authoritative, queryable historical record of every savings event with atomic consistency, deterministic ordering, single committed timestamp, note sanitization, and clean domain boundaries.
+- **Actions Taken**:
+  1. Domain Architecture:
+     - Extended `TransactionRepository` with `observeTransactions(pigId: Long): Flow<List<Transaction>> = getTransactionsForPig(pigId)`.
+     - Created `GetTransactionsUseCase` establishing clean domain boundaries (`Room` -> `TransactionRepository` -> `GetTransactionsUseCase` -> `HistoryViewModel` -> `HistoryScreen`).
+     - Added `isPositive` and `isZero` helper properties to `Money` domain model.
+  2. Data Layer Hardening:
+     - Updated `TransactionDao` queries to enforce deterministic secondary ordering: `ORDER BY timestamp DESC, id DESC`.
+     - Hardened `PigRepositoryImpl.addSavings`:
+       - Enforced `require(amount.isPositive)` validation.
+       - Captured single committed timestamp (`val committedAt = System.currentTimeMillis()`) shared across both `pigDao.updateBalance` and `txEntity`.
+       - Sanitized notes: trimmed whitespace with consistent fallback to `"Clink savings"`.
+       - Thread-safe default pig initialization using `Mutex.withLock` to eliminate race conditions during cold boot.
+  3. Presentation Layer:
+     - Refactored `HistoryViewModel` to inject `GetTransactionsUseCase` (with optional `pigId` from `SavedStateHandle`).
+     - Hardened `AddMoneyViewModel` and `AddMoneyScreen` with `isProcessing` state lockout preventing rapid duplicate saves after success.
+  4. Automated Testing (14 new unit tests, 82 total):
+     - Added `TransactionDomainTest` (3 tests): Money paise preservation, bidirectional `TransactionEntity` mapping fidelity.
+     - Added `GetTransactionsUseCaseTest` (2 tests): observing all transactions vs filtered pigId transactions.
+     - Added `TransactionAtomicityTest` (7 tests): successful atomic commit, rollback on failure, single timestamp verification, note fallback, non-existent pig rejection, invalid amount rejection, and deterministic ordering with timestamp collision.
+     - Added `HistoryViewModelTest` (2 tests): reactive StateFlow emissions via `GetTransactionsUseCase`.
+     - Total unit tests: 82/82 PASS (100% pass rate).
+  5. Build & Lint:
+     - `assembleDebug`: SUCCESS.
+     - `test`: 82/82 PASS.
+     - `lint`: 0 errors, 0 warnings.
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A: Fresh save ₹10 -> balance ₹10, exactly 1 transaction verified in SQLite: PASS.
+     - Scenario B: Save ₹20 -> balance ₹30, exactly 2 transactions verified in SQLite: PASS.
+     - Scenario C: Save ₹50 -> balance ₹80, exactly 3 transactions verified in SQLite: PASS.
+     - Scenario D: App restart -> balance ₹80, 3 transactions preserved without duplicates: PASS.
+     - Scenario E: Rapid repeated save taps -> exactly 1 transaction created per user action: PASS.
+     - Scenario F: Saving History UI -> transactions loaded via `GetTransactionsUseCase` ordered newest first: PASS.
+     - Scenario G: Dark mode -> night mode toggled cleanly without rendering/theme flaws: PASS.
+     - Scenario H: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS.
+- **Status**: COMPLETE & VERIFIED
+
+

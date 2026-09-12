@@ -2,6 +2,31 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-006] - Transaction Engine Hardening
+
+### Added
+- Domain Layer:
+  - `TransactionRepository.observeTransactions(pigId)` default method for standardized reactive observation.
+  - `GetTransactionsUseCase`: dedicated domain use case providing clean boundaries for history queries across all pigs or by specific pig ID.
+  - `Money.isPositive` and `Money.isZero` helper properties.
+- Data Layer:
+  - Deterministic secondary ordering in `TransactionDao`: `ORDER BY timestamp DESC, id DESC`.
+  - Atomicity hardening in `PigRepositoryImpl.addSavings`: unified single committed timestamp, note sanitization, and positive amount validation.
+  - Thread-safe default pig initialization using `Mutex.withLock` in `PigRepositoryImpl.getOrCreateDefaultPig()`.
+- Presentation Layer:
+  - `HistoryViewModel` refactored to consume `GetTransactionsUseCase` and handle optional navigation arguments from `SavedStateHandle`.
+  - `isProcessing` state lockout in `AddMoneyViewModel` and `AddMoneyScreen` disabling button and ignoring taps after success.
+- Unit Tests (14 new tests, 82 total):
+  - `TransactionDomainTest` (3 tests).
+  - `GetTransactionsUseCaseTest` (2 tests).
+  - `TransactionAtomicityTest` (7 tests).
+  - `HistoryViewModelTest` (2 tests).
+
+### Changed
+- `UseCaseModule`: registered `GetTransactionsUseCase`.
+- `TransactionDao`: added deterministic `id DESC` secondary sort key.
+- `HistoryScreen`: consumes transactions exclusively via `GetTransactionsUseCase`.
+
 ## [TASK-005] - Pig Engine + Single Pig Experience
 
 ### Added

@@ -32,6 +32,9 @@ value class Money(val paise: Long) : Comparable<Money> {
 
     override fun compareTo(other: Money): Int = this.paise.compareTo(other.paise)
 
+    val isPositive: Boolean get() = this.paise > 0L
+    val isZero: Boolean get() = this.paise == 0L
+
     /**
      * Formats the amount in Indian Rupees (e.g. ₹10, ₹10.50, ₹1,000).
      */

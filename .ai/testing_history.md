@@ -1,5 +1,76 @@
 # CLINK Testing History
  
+## TASK-006 Transaction Engine Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **82/82 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `MoneyTest`: 11/11
+  - `TransactionDomainTest` [NEW]: 3/3 (Money paise preservation, bidirectional `TransactionEntity` mapping)
+  - `AddMoneyUseCaseTest`: 7/7
+  - `GetTransactionsUseCaseTest` [NEW]: 2/2 (All transactions vs pigId filtered query)
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `TransactionAtomicityTest` [NEW]: 7/7 (Atomic commit, atomic rollback on failure, single timestamp verification, note fallback, non-existent pig rejection, invalid amount rejection, deterministic query ordering)
+  - `AddMoneyViewModelTest`: 5/5
+  - `HistoryViewModelTest` [NEW]: 2/2 (Reactive StateFlow emissions via `GetTransactionsUseCase`)
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4
+  - `ClinkComponentsTest`: 3/3
+  - `UserPreferencesRepositoryTest`: 5/5
+  - `OnboardingUseCasesTest`: 3/3
+  - `OnboardingViewModelTest`: 5/5
+  - `MainViewModelTest`: 3/3
+  - `SavingsIsolationTest`: 1/1
+  - `PigStateCalculatorTest`: 7/7
+  - `PigProgressionPersistenceTest`: 3/3
+  - `HomeViewModelTest`: 2/2
+  - `PigDetailViewModelTest`: 2/2
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`)
+1. **Scenario A - Fresh State & Save ₹10**:
+   - Initial fresh state verified in SQLite: 1 pig (id=1, balance=0), 0 transactions.
+   - Saved ₹10.
+   - Verified SQLite: `balancePaise = 1000` (₹10), exactly 1 transaction (`CREDIT`, `1000 paise`, `Clink savings`).
+   - Single committed timestamp verified: `pig.updatedAt == tx.timestamp` (1789195203606). (PASS)
+2. **Scenario B - Save ₹20**:
+   - Saved ₹20.
+   - Verified SQLite: `balancePaise = 3000` (₹30), exactly 2 transactions.
+   - Tx 2: `amountPaise = 2000` (₹20), `pig.updatedAt == tx.timestamp` (1789195217402). (PASS)
+3. **Scenario C - Save ₹50**:
+   - Saved ₹50.
+   - Verified SQLite: `balancePaise = 8000` (₹80), exactly 3 transactions.
+   - Tx 3: `amountPaise = 5000` (₹50), `pig.updatedAt == tx.timestamp` (1789195231642). (PASS)
+4. **Scenario D - Restart App Persistence**:
+   - Force-stopped app (`am force-stop`) and relaunched (`am start`).
+   - Verified SQLite: balance remains exactly ₹80, transactions count remains 3.
+   - No duplicate pigs or transactions created on restart. (PASS)
+5. **Scenario E - Rapid Repeated Save Taps**:
+   - Executed 5 rapid taps on "Clink It! 🐷" within 150ms.
+   - Hardened `isProcessing` state lockout prevented multiple processing.
+   - Verified SQLite: balance incremented by exactly ₹10 to ₹90 (9000 paise), transaction count incremented by exactly 1 to 4. (PASS)
+6. **Scenario F - Saving History UI**:
+   - Opened Saving History screen.
+   - Verified UI card list ordered newest-first: ₹10 (id 4), ₹50 (id 3), ₹20 (id 2), ₹10 (id 1).
+   - Verified proper note ("Clink savings"), timestamp, and credit styling (+₹). (PASS)
+7. **Scenario G - Dark Mode**:
+   - Toggled dark mode (`cmd uimode night yes`).
+   - Verified dark theme contrast and rendering without visual glitches or crashes. (PASS)
+8. **Scenario H - Logcat Audit**:
+   - Audited Logcat: `adb logcat -d -s AndroidRuntime:E`.
+   - Verified 0 fatal exceptions, 0 runtime crashes. (PASS)
+
+---
+
 ## TASK-005 Pig Engine + Single Pig Experience Test Record (2026-09-12)
  
 ### Environment

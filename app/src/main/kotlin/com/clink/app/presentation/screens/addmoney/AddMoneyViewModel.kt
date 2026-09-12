@@ -27,6 +27,7 @@ data class AddMoneyUiState(
     val saveStatus: SaveStatus = SaveStatus.Idle
 ) {
     val isLoading: Boolean get() = saveStatus is SaveStatus.Saving
+    val isProcessing: Boolean get() = saveStatus is SaveStatus.Saving || saveStatus is SaveStatus.Success
     val errorMessage: String? get() = (saveStatus as? SaveStatus.Error)?.message
 }
 
@@ -50,13 +51,13 @@ class AddMoneyViewModel @Inject constructor(
     val events: SharedFlow<AddMoneyEvent> = _events.asSharedFlow()
 
     fun onSelectAmount(amount: Money) {
-        if (_uiState.value.isLoading) return
+        if (_uiState.value.isProcessing) return
         _uiState.value = _uiState.value.copy(selectedAmount = amount)
     }
 
     fun onAddMoney() {
-        // Prevent duplicate rapid save taps while already processing
-        if (_uiState.value.isLoading) return
+        // Prevent duplicate rapid save taps while already processing or after success
+        if (_uiState.value.isProcessing) return
         _uiState.value = _uiState.value.copy(saveStatus = SaveStatus.Saving)
 
         viewModelScope.launch {

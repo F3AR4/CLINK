@@ -60,5 +60,13 @@ object UseCaseModule {
     ): com.clink.app.domain.usecase.GetPrimaryPigUseCase {
         return com.clink.app.domain.usecase.GetPrimaryPigUseCase(pigRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideGetTransactionsUseCase(
+        transactionRepository: TransactionRepository
+    ): com.clink.app.domain.usecase.GetTransactionsUseCase {
+        return com.clink.app.domain.usecase.GetTransactionsUseCase(transactionRepository)
+    }
 }
 
