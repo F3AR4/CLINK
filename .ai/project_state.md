@@ -2,8 +2,8 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-006: Transaction Engine
-- **Status**: COMPLETE & VERIFIED (APK assembled, 82/82 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-007: Home Dashboard
+- **Status**: COMPLETE & VERIFIED (APK assembled, 85/85 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -37,21 +37,22 @@
     - `ClinkSectionHeader`: Section titles with optional action buttons
     - `ClinkEmptyState`: Pig mascot empty state with call-to-action
   - Screens:
+    - `HomeScreen`: Interactive Primary Pig hero card with state badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar, in-dashboard "Save Money 🐷" CTA, shortcuts to History and Goals, Recent Activity section showing 3 most recent transactions with relative timestamps, encouraging empty guidance for ₹0 balance, and accessible Extended FAB
     - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
-    - `HomeScreen`: Hero savings & single pig progression card with tier progress bar, status badge, dynamic mascot, accessible FAB
-    - `PigDetailScreen`: Upgraded to CLINK design system, showing mascot hero, progression status, tier progress bar, detailed metadata card, and actions
+    - `PigDetailScreen`: Mascot hero, progression status, tier progress bar, detailed metadata card, and actions
     - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA with `isProcessing` lock out preventing post-success rapid double taps
     - `HistoryScreen`: Powered by `HistoryViewModel` injecting `GetTransactionsUseCase`, displaying newest-first transactions with credit pills (+₹) and formatted timestamps
     - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (82 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+- **Testing**: VERIFIED (85 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+  - `HomeViewModelTest.kt` (3/3 pass, including recent transactions query verification)
   - `MoneyTest.kt` (11/11 pass)
-  - `TransactionDomainTest.kt` (3/3 pass) [NEW]
+  - `TransactionDomainTest.kt` (3/3 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
-  - `GetTransactionsUseCaseTest.kt` (2/2 pass) [NEW]
+  - `GetTransactionsUseCaseTest.kt` (2/2 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
-  - `TransactionAtomicityTest.kt` (7/7 pass) [NEW]
+  - `TransactionAtomicityTest.kt` (7/7 pass)
   - `AddMoneyViewModelTest.kt` (5/5 pass)
-  - `HistoryViewModelTest.kt` (2/2 pass) [NEW]
+  - `HistoryViewModelTest.kt` (2/2 pass)
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
   - `ClinkThemeTest.kt` (4/4 pass)
   - `ClinkComponentsTest.kt` (3/3 pass)
@@ -62,15 +63,14 @@
   - `SavingsIsolationTest.kt` (1/1 pass)
   - `PigStateCalculatorTest.kt` (7/7 pass)
   - `PigProgressionPersistenceTest.kt` (3/3 pass)
-  - `HomeViewModelTest.kt` (2/2 pass)
   - `PigDetailViewModelTest.kt` (2/2 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - Scenario A: Fresh save ₹10 -> balance ₹10, exactly 1 transaction: PASS
-  - Scenario B: Save ₹20 -> balance ₹30, exactly 2 transactions: PASS
-  - Scenario C: Save ₹50 -> balance ₹80, exactly 3 transactions: PASS
-  - Scenario D: App restart -> balance ₹80, 3 transactions preserved without duplicates: PASS
-  - Scenario E: Rapid repeated save taps -> exactly 1 transaction recorded per user action: PASS
-  - Scenario F: Saving History UI -> transactions loaded via `GetTransactionsUseCase` ordered newest first: PASS
-  - Scenario G: Dark mode -> night mode toggled cleanly without rendering/theme flaws: PASS
+  - Scenario A: Fresh Home ₹0 state -> displays ₹0, `🐣 New`, first-save guidance card, `Save First ₹10 🐷` CTA: PASS
+  - Scenario B: Save ₹20 -> balance ₹20, `🌱 Growing`, 4% toward ₹500, Recent Activity showing 1 transaction: PASS
+  - Scenario C: Save ₹50 -> balance ₹70, `🌱 Growing`, 14% toward ₹500, Recent Activity showing 2 transactions: PASS
+  - Scenario D: Navigation shortcuts -> History, Goals, and Primary Pig Detail screens open and return cleanly: PASS
+  - Scenario E: App restart -> balance ₹70, `🌱 Growing`, 2 transactions preserved without duplicates: PASS
+  - Scenario F: Dark mode -> night mode toggled cleanly, contrast and styling validated via screenshot: PASS
+  - Scenario G: Long balance formatting -> `MoneyDisplay` verified without clipping: PASS
   - Scenario H: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS

@@ -22,26 +22,27 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-006 Complete)
+## 4. Current State (TASK-007 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
 - First-launch Onboarding & Persistent User State implemented & verified.
 - Pig Engine + Single Pig Progression implemented & verified.
-- Transaction Engine hardened and verified:
-  - Authoritative history with atomic consistency (`withTransaction`).
-  - Zero floating-point currency: pure integer paise (`Money`) throughout domain and SQLite.
-  - Deterministic secondary ordering (`ORDER BY timestamp DESC, id DESC`).
-  - Single committed timestamp shared across balance update and transaction record.
-  - Consistent note sanitization and fallback.
-  - Clean domain query boundary via `GetTransactionsUseCase`.
-  - Mutex-guarded thread-safe default pig initialization.
+- Transaction Engine hardened and verified with atomic consistency.
+- Home Dashboard polished as central everyday savings experience:
+  - Hero Card featuring dynamic state-aware mascot (`ClinkPigIllustration`), status badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar (`animateFloatAsState`), and contextual motivational text.
+  - In-dashboard primary "Save Money 🐷" / "Save First ₹10 🐷" CTA button.
+  - 2-column shortcut grid for "History" and "Goals".
+  - "Recent Activity" section with 3 most recent transactions ordered newest-first, formatted with relative timestamps (`Today, hh:mm a`), transaction notes, and credit pill indicators (`+ ₹50`).
+  - First-use empty guidance card welcoming the user and guiding their first save when balance is ₹0.
+  - Extended FAB for `+ Add Savings` with elevation and accessible semantics.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat test` verified (82 tests, 0 failures, 100% PASS).
+  - Unit Tests: `.\gradlew.bat test` verified (85 tests, 0 failures, 100% PASS).
   - Static Analysis: `.\gradlew.bat lint` verified (SUCCESS, 0 errors, 0 warnings).
   - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-H verified.
+
 

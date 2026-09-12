@@ -2,6 +2,23 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-007] - Home Dashboard Polish
+
+### Added
+- Presentation Layer:
+  - Redesigned `HomeScreen` as a comprehensive daily savings dashboard:
+    - Primary Pig Hero Card featuring dynamic state-aware mascot illustration (`ClinkPigIllustration`), status badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar (`animateFloatAsState`), and contextual motivational text.
+    - Top-tier celebratory state handling when full to avoid artificial 100% bars.
+    - In-dashboard primary "Save Money 🐷" / "Save First ₹10 🐷" action button.
+    - Quick navigation shortcuts for "History" (All transactions) and "Goals" (Savings targets).
+    - "Recent Activity" section showing the 3 most recent transactions ordered newest-first, formatted with relative timestamps (`Today, hh:mm a`, `Yesterday, hh:mm a`, `dd MMM, hh:mm a`), transaction notes, and credit pill indicators (`+ ₹50`).
+    - First-use empty guidance card welcoming the user and guiding their first save when balance is ₹0.
+    - Extended FAB for `+ Add Savings` with elevation and accessible semantics.
+  - `HomeUiState` updated with `recentTransactions: List<Transaction> = emptyList()`.
+  - `HomeViewModel` injected with `GetTransactionsUseCase`, combining pigs and transactions reactively.
+- Unit Testing:
+  - `HomeViewModelTest`: Added test case verifying reactive emission of `recentTransactions` limited to the 3 most recent transactions. Total tests increased to 85.
+
 ## [TASK-006] - Transaction Engine Hardening
 
 ### Added

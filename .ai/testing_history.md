@@ -1,5 +1,68 @@
 # CLINK Testing History
  
+## TASK-007 Home Dashboard Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **85/85 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `HomeViewModelTest`: 3/3 (Reactive StateFlow emissions with 3 recent transactions, primary pig balance, empty ₹0 state)
+  - `MoneyTest`: 11/11
+  - `TransactionDomainTest`: 3/3
+  - `AddMoneyUseCaseTest`: 7/7
+  - `GetTransactionsUseCaseTest`: 2/2
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `TransactionAtomicityTest`: 7/7
+  - `AddMoneyViewModelTest`: 5/5
+  - `HistoryViewModelTest`: 2/2
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4
+  - `ClinkComponentsTest`: 3/3
+  - `UserPreferencesRepositoryTest`: 5/5
+  - `OnboardingUseCasesTest`: 3/3
+  - `OnboardingViewModelTest`: 5/5
+  - `MainViewModelTest`: 3/3
+  - `SavingsIsolationTest`: 1/1
+  - `PigStateCalculatorTest`: 7/7
+  - `PigProgressionPersistenceTest`: 3/3
+  - `PigDetailViewModelTest`: 2/2
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`)
+1. **Scenario A - Fresh Home ₹0 State**:
+   - Initial fresh state verified on Home screen: balance ₹0, `🐣 New` badge, 0% progress toward ₹500.
+   - First-Use encouraging guidance card rendered with "Save First ₹10 🐷" CTA. (PASS)
+2. **Scenario B - Save ₹20**:
+   - Tapped "Save First ₹10 🐷", selected ₹20, tapped "Clink It! 🐷".
+   - Home updated immediately: balance ₹20, `🌱 Growing` badge, 4% progress toward ₹500.
+   - Recent Activity showed 1 item: `Clink savings`, `Today, 12:33 PM`, `+ ₹20`. (PASS)
+3. **Scenario C - Save ₹50**:
+   - Saved additional ₹50.
+   - Home updated immediately: balance ₹70, `🌱 Growing` badge, 14% progress toward ₹500.
+   - Recent Activity showed 2 items: `+ ₹50` and `+ ₹20`. (PASS)
+4. **Scenario D - Navigation Shortcuts**:
+   - Tapped "History" shortcut -> navigated to `Saving History` screen displaying all transactions -> back. (PASS)
+   - Tapped "Goals" shortcut -> navigated to `Savings Goals` screen displaying empty state -> back. (PASS)
+   - Tapped Primary Pig Hero Card -> navigated to `Primary Pig` detail screen with full breakdown -> back. (PASS)
+5. **Scenario E - App Restart Persistence**:
+   - Force-stopped app (`am force-stop com.clink.app`) and relaunched (`am start`).
+   - Home restored exact state: balance ₹70, `🌱 Growing`, 14% progress, exactly 2 transactions in Recent Activity; zero duplicates. (PASS)
+6. **Scenario F - Dark Mode Contrast & Theming**:
+   - Enabled night mode (`cmd uimode night yes`).
+   - Captured on-device screenshot: Verified high-contrast dark navy surfaces, vibrant pink mascot, readable typography, and accessible touch targets. (PASS)
+7. **Scenario G - Long Balance Formatting**:
+   - `MoneyDisplay` verified with proper paise truncation and currency symbol sizing without clipping. (PASS)
+8. **Scenario H - Logcat Fatal Exception Audit**:
+   - `adb logcat -d -s AndroidRuntime:E` verified 0 fatal exceptions. (PASS)
+
 ## TASK-006 Transaction Engine Test Record (2026-09-12)
  
 ### Environment

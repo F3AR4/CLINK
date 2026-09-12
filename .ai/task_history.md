@@ -233,4 +233,37 @@
      - Scenario H: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS.
 - **Status**: COMPLETE & VERIFIED
 
+### TASK-007: Home Dashboard Polish
+- **Date**: 2026-09-12
+- **Goal**: Establish the Home screen as the primary everyday savings experience communicating total saved, primary pig visual state, milestone progression, immediate savings CTA, quick navigation shortcuts, recent activity, and first-use guidance.
+- **Actions Taken**:
+  1. Presentation Layer Architecture:
+     - Updated `HomeUiState` to expose `recentTransactions: List<Transaction> = emptyList()`.
+     - Injected `GetTransactionsUseCase` into `HomeViewModel`, combining pig state and transactions reactively via `combine`, limiting recent activity to the top 3 items.
+     - Redesigned `HomeScreen` with CLINK design tokens:
+       - Interactive Primary Pig Hero Card featuring dynamic state-aware mascot illustration (`ClinkPigIllustration`), status badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar (`animateFloatAsState`), and contextual motivational text.
+       - Milestone progression calculation with celebratory top-tier banner handling to prevent artificial 100% bars.
+       - High-contrast in-dashboard "Save Money 🐷" / "Save First ₹10 🐷" CTA.
+       - 2-column quick shortcut grid for "History" (All transactions) and "Goals" (Savings targets).
+       - "Recent Activity" section with `ClinkSectionHeader`, relative timestamp formatting (`Today, hh:mm a`, `Yesterday, hh:mm a`, `dd MMM, hh:mm a`), notes, and credit pill indicators (`+ ₹50`).
+       - First-use empty guidance card for ₹0 balance guiding new users to save their first ₹10.
+       - Extended FAB for `+ Add Savings` with elevation and accessible semantics.
+  2. Automated Testing:
+     - Added unit test in `HomeViewModelTest` verifying reactive emission of `recentTransactions` limited to 3 items.
+     - Total unit tests: 85/85 PASS (100% pass rate).
+  3. Build & Lint:
+     - `assembleDebug`: SUCCESS.
+     - `test`: 85/85 PASS.
+     - `lint`: 0 errors, 0 warnings.
+  4. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A (Fresh Home ₹0 state): Displayed ₹0, `🐣 New`, first-save guidance card, `Save First ₹10 🐷` CTA: PASS.
+     - Scenario B (Save ₹20): Balance updated to ₹20, `🌱 Growing`, 4% toward ₹500, Recent Activity showing 1 item: PASS.
+     - Scenario C (Save ₹50): Balance updated to ₹70, `🌱 Growing`, 14% toward ₹500, Recent Activity showing 2 items: PASS.
+     - Scenario D (Navigation shortcuts): History, Goals, and Primary Pig Detail screens open and return cleanly: PASS.
+     - Scenario E (App restart): Balance ₹70, `🌱 Growing`, 2 transactions preserved without duplicates: PASS.
+     - Scenario F (Dark mode): Verified theme contrast and night mode rendering via on-device screenshot: PASS.
+     - Scenario G (Long balance formatting): `MoneyDisplay` verified without clipping: PASS.
+     - Scenario H (Logcat audit): `adb logcat -d -s AndroidRuntime:E` confirmed 0 fatal exceptions: PASS.
+- **Status**: COMPLETE & VERIFIED
+
 
