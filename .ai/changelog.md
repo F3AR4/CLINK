@@ -2,6 +2,40 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-009] - Goals Engine
+
+### Added
+- Domain Layer:
+  - `GoalProgress`: Immutable domain representation combining `Goal` with derived savings progress (`currentAmount`, `targetAmount`, `remainingAmount`, `progressPercent`, `progressFraction`, `isCompleted`).
+  - `GoalProgressCalculator`: Pure domain engine for deterministic progress calculations using exclusively integer paise (`Long`). Defensively clamps to 0..100, caps progress percentage at 99% if `current < target`, and prevents division by zero. Zero `Float` or `Double` monetary conversions.
+  - `GoalRepository`: Domain interface supporting reactive goal streams per pig (`observeGoalsForPig`), global observation (`observeAllGoals`), single item retrieval (`getGoalById`), creation, updating, and deletion.
+  - `CreateGoalUseCase`: Domain use case validating goal title (required, trimmed, max 50 characters), target amount (positive, non-zero `Money`), pig existence, and persisting via repository.
+  - `ObserveGoalsUseCase`: Reactive use case combining goal flow and pig flow to dynamically compute `GoalProgress` for all goals; sorts active goals first by `createdAt DESC`, followed by completed goals by `createdAt DESC`.
+  - `DeleteGoalUseCase`: Domain use case safely deleting goals without touching pig balance, transactions, or user savings.
+- Data Layer:
+  - `GoalDao`: Upgraded with deterministic ordering (`ORDER BY createdAt DESC, id DESC`), `getGoalById(Long)`, and `deleteGoal(Long)`.
+  - `GoalRepositoryImpl`: Implemented complete CRUD and reactive flows mapping `GoalEntity` to domain `Goal`.
+- Presentation Layer:
+  - `CreateGoalViewModel`: Handles form state (`title`, `targetAmountRupees`, `canSubmit`, `isProcessing`, `errorMessage`), enforces integer rupee input filtering, suppresses double-taps, and emits navigation events.
+  - `CreateGoalScreen`: Full goal creation UI adhering to CLINK design tokens: pig mascot header, title input with 50-character counter, rupee target input with `₹ ` prefix, real-time error banner, and `ClinkButton`.
+  - `GoalScreen`: Upgraded goal dashboard supporting empty state with "Create Your First Goal 🎯" CTA, active/completed goal cards with animated progress bars, celebratory "Completed 🎉" badges, "Goal achieved!" feedback, extended FAB, and safe delete confirmation dialog.
+  - `HomeScreen` & `HomeViewModel`: Integrated compact goal summary card ("🎯 Your Goal", progress bar, navigation link) into Home dashboard.
+  - `PigDetailScreen` & `PigDetailViewModel`: Integrated concise goal summary card into Pig Detail.
+  - `Screen.CreateGoal`: Route pattern `"create_goal?pigId={pigId}"` with type-safe argument parsing in `ClinkNavGraph`.
+- Unit Testing:
+  - Added 35 new unit tests across 7 new test suites, bringing total unit tests to 131 (100% passing):
+    - `GoalProgressCalculatorTest` (10 tests)
+    - `CreateGoalUseCaseTest` (6 tests)
+    - `ObserveGoalsUseCaseTest` (4 tests)
+    - `DeleteGoalUseCaseTest` (3 tests)
+    - `GoalIntegrationTest` (4 tests)
+    - `GoalViewModelTest` (5 tests)
+    - `CreateGoalViewModelTest` (8 tests)
+    - `GoalRepositoryImplTest` (5 tests)
+- Runtime Verification:
+  - Verified on Android 16 / API 36 emulator (`emulator-5554`) across Scenarios A through K with zero crashes, zero errors, and clean logcat.
+
+
 ## [TASK-008] - Add Money Experience Polish
 
 ### Added

@@ -68,5 +68,32 @@ object UseCaseModule {
     ): com.clink.app.domain.usecase.GetTransactionsUseCase {
         return com.clink.app.domain.usecase.GetTransactionsUseCase(transactionRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideCreateGoalUseCase(
+        goalRepository: com.clink.app.domain.repository.GoalRepository,
+        pigRepository: PigRepository
+    ): com.clink.app.domain.usecase.CreateGoalUseCase {
+        return com.clink.app.domain.usecase.CreateGoalUseCase(goalRepository, pigRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideObserveGoalsUseCase(
+        goalRepository: com.clink.app.domain.repository.GoalRepository,
+        pigRepository: PigRepository
+    ): com.clink.app.domain.usecase.ObserveGoalsUseCase {
+        return com.clink.app.domain.usecase.ObserveGoalsUseCase(goalRepository, pigRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeleteGoalUseCase(
+        goalRepository: com.clink.app.domain.repository.GoalRepository
+    ): com.clink.app.domain.usecase.DeleteGoalUseCase {
+        return com.clink.app.domain.usecase.DeleteGoalUseCase(goalRepository)
+    }
 }
+
 

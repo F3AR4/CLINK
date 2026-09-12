@@ -10,11 +10,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GoalDao {
-    @Query("SELECT * FROM goals WHERE pigId = :pigId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM goals WHERE pigId = :pigId ORDER BY createdAt DESC, id DESC")
     fun getGoalsForPig(pigId: Long): Flow<List<GoalEntity>>
 
-    @Query("SELECT * FROM goals ORDER BY createdAt DESC")
+    @Query("SELECT * FROM goals ORDER BY createdAt DESC, id DESC")
     fun getAllGoals(): Flow<List<GoalEntity>>
+
+    @Query("SELECT * FROM goals WHERE id = :id")
+    suspend fun getGoalById(id: Long): GoalEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGoal(goal: GoalEntity): Long

@@ -1,6 +1,62 @@
 # CLINK Testing History
  
-## TASK-008 Add Money Experience Test Record (2026-09-12)
+## TASK-009 Goals Engine Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat testDebugUnitTest`: **131/131 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `GoalProgressCalculatorTest`: 10/10 (zero target, negative target, current < target, current == target, current > target, remaining amount, completion, clamp to 100%, 99% cap if under target, zero balance)
+  - `CreateGoalUseCaseTest`: 6/6 (valid creation, blank title error, whitespace title error, title length > 50 error, zero target amount error, non-existent pig error)
+  - `ObserveGoalsUseCaseTest`: 4/4 (empty list, derived progress computation, active-first ordering with completed last, non-existent pig empty flow)
+  - `DeleteGoalUseCaseTest`: 3/3 (successful deletion, failure propagation, non-existent goal)
+  - `GoalIntegrationTest`: 4/4 (end-to-end create -> save -> progress changes 20% -> 100% completed -> delete leaves pig balance and transactions intact)
+  - `GoalViewModelTest`: 5/5 (initial state, goals emission, delete goal, delete confirmation dialog show/dismiss)
+  - `CreateGoalViewModelTest`: 8/8 (initial state, title input, amount input, non-numeric filtering, validation errors, successful submit event, double-tap lockout, repository failure handling)
+  - `GoalRepositoryImplTest`: 5/5 (observeGoalsForPig, observeAllGoals, getGoalById, createGoal, deleteGoal)
+  - Plus all 96 existing unit test suites (MoneyTest, PigStateCalculatorTest, AddMoneyViewModelTest, HomeViewModelTest, PigProgressionPersistenceTest, SavingsEnginePersistenceTest, TransactionAtomicityTest, etc.)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`)
+1. **Scenario A - Empty State**:
+   - Navigated to Goals screen: Empty state rendered with mascot, message "Give your savings a destination.", and "Create Your First Goal 🎯" button. (PASS)
+2. **Scenario B - Create Goal**:
+   - Clicked "Create Your First Goal" -> entered "New Headphones", target ₹500 -> clicked "Create Goal 🎯". (PASS)
+   - Goal card rendered immediately showing ₹0 / ₹500, 0%, ₹500 to go. (PASS)
+3. **Scenario C - Save Money & Reactive Progress**:
+   - Navigated to Add Money -> saved ₹100 -> returned to Goals. (PASS)
+   - Goal card automatically updated to ₹100 / ₹500, 20%, ₹400 to go without requiring manual refresh. (PASS)
+4. **Scenario D - Continue Saving to Completion**:
+   - Saved additional ₹400 (pig balance = ₹500) -> opened Goals. (PASS)
+   - Goal transitioned to 100%, progress bar full, badge `Completed 🎉`, remaining text `Goal achieved!`, ₹0 remaining. (PASS)
+5. **Scenario E - Persistence Across Process Death**:
+   - Terminated app process via `am force-stop` -> relaunched app -> opened Goals. (PASS)
+   - Goal "New Headphones", 100% completion state, and ₹500 balance persisted perfectly. (PASS)
+6. **Scenario F - Multiple Goals & Active-First Ordering**:
+   - Created second goal "Emergency Fund" with target ₹2,000. (PASS)
+   - Verified both goals display: Active goal "Emergency Fund" (₹500 / ₹2,000, 25%) displayed first, Completed goal "New Headphones" displayed afterward. (PASS)
+7. **Scenario G - Safe Deletion**:
+   - Tapped delete icon on "New Headphones" -> confirmed in dialog. (PASS)
+   - Goal disappeared from list. (PASS)
+   - Checked Pig balance: exactly ₹500 (unchanged). (PASS)
+   - Checked Transaction history: all transactions intact (unchanged). (PASS)
+8. **Scenario H - Validation**:
+   - Attempted creating goals with blank name and ₹0 amount -> inline validation messages prevented submission, button remained disabled. (PASS)
+9. **Scenario I - Dark Mode**:
+   - Enabled system dark mode -> captured screenshots for Home, Goals, and Create Goal screens. All surfaces, cards, typography, and progress indicators verified with high contrast and proper theming. (PASS)
+10. **Scenario J - Navigation Integrity**:
+    - Navigated Home -> Goals -> Create Goal -> Back to Goals -> Back to Home. Back stack remained fully intact without orphaned screens. (PASS)
+11. **Scenario K - Logcat Audit**:
+    - Audited logcat with `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E`. 0 fatal exceptions, 0 crashes, 0 errors. (PASS)
+
  
 ### Environment
 - **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)

@@ -37,3 +37,16 @@
 - **Context**: Need reliable local storage with foreign keys and cascade rules for Pig, Transactions, and Goals.
 - **Decision**: Room 2.6.1 with KSP code generation, explicit foreign keys, schema export enabled.
 - **Consequences**: Safe migrations, relational integrity, compile-time query verification.
+
+## ADR-006: Derived Goal Progress and Authorization Semantics
+- **Date**: 2026-09-12
+- **Status**: Accepted
+- **Context**: A goal represents a savings target for a Pig. Introducing an independent mutable `savedAmount` column on `Goal` would create a duplicate balance system prone to drift, synchronization lag, and confusion when transactions or adjustments occur.
+- **Decision**:
+  1. The Pig's balance and Room transaction records remain solely authoritative (`Pig.balance -> Goal progress`, never `Goal.savedAmount -> Pig.balance`).
+  2. `Goal` entity stores only identity and target specifications (`id`, `pigId`, `title`, `targetAmount`, `createdAt`).
+  3. Goal progress is derived dynamically in domain via `GoalProgressCalculator` using 100% integer paise (`Long`).
+  4. Deleting a goal has zero side effects on Pig balance or Transaction history.
+  5. Deterministic active-first ordering: incomplete goals are presented first (sorted by `createdAt DESC`), followed by completed goals (`createdAt DESC`).
+- **Consequences**: Eliminates data drift and reconciliation bugs. Ensures zero floating-point monetary arithmetic and guarantees safe goal management.
+

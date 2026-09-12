@@ -297,5 +297,51 @@
      - Scenario J (Logcat Audit): `adb logcat -d -s AndroidRuntime:E` verified 0 fatal exceptions: PASS.
 - **Status**: COMPLETE & VERIFIED
 
-
-
+### TASK-009: Goals Engine
+- **Date**: 2026-09-12
+- **Goal**: Implement and verify the CLINK Goals Engine. Allow users to create savings targets, track progress dynamically derived from the authoritative pig balance, emphasize active goals, celebrate completed goals, safely delete goals without modifying savings or transactions, and provide zero floating-point monetary arithmetic.
+- **Actions Taken**:
+  1. Domain Architecture:
+     - Preserved existing `Goal` model (`id`, `pigId`, `title`, `targetAmount`, `createdAt`).
+     - Created `GoalProgress` data model (`goal`, `currentAmount`, `targetAmount`, `remainingAmount`, `progressPercent`, `progressFraction`, `isCompleted`).
+     - Implemented `GoalProgressCalculator`: deterministic pure domain calculator using Long paise integer arithmetic. Handles zero and non-positive targets defensively, clamps progress to 0..100, caps progress percentage at 99% if current < target, marks completion when current >= target, and computes visual fraction for Compose UI.
+     - Implemented `CreateGoalUseCase`: validates non-blank title, max 50 characters, positive target amount, validates pig existence, and persists to repository.
+     - Implemented `ObserveGoalsUseCase`: combines goals flow with pig balance flow, reactively computes `GoalProgress`, orders active (incomplete) goals first (`createdAt DESC`), followed by completed goals (`createdAt DESC`).
+     - Implemented `DeleteGoalUseCase`: safely removes goal without touching pig balance or transaction history.
+  2. Data Layer:
+     - Maintained Room v1 `GoalEntity` schema compatibility (zero destructive migrations).
+     - Enhanced `GoalDao` with secondary ordering `ORDER BY createdAt DESC, id DESC` and `getGoalById(id)`.
+     - Implemented `GoalRepositoryImpl` observing and persisting goals.
+  3. Presentation Layer:
+     - Wired `Screen.CreateGoal` into `Screen.kt` and `ClinkNavGraph.kt`.
+     - Created `CreateGoalViewModel`: state-driven validation (title trimming, 0/50 counter, non-digit filtering, zero/negative rejection, 1-100,000,000 range check, double-tap lockout, one-shot event emissions).
+     - Built `CreateGoalScreen`: mascot hero illustration, `OutlinedTextField` inputs, character counter, inline error messages, and `ClinkButton`.
+     - Redesigned `GoalScreen` & `GoalViewModel`: reactive collection of `GoalProgress`, empty state with "Create Your First Goal 🎯", card progress bar, completed state badge (`Completed 🎉`), "Goal achieved!" status, floating action button for new goals, and safe delete confirmation dialog.
+     - Integrated compact goal summary card into `HomeScreen` (active goal title, progress percentage, progress bar, current / target, and remaining amount).
+     - Integrated concise goal summary card into `PigDetailScreen`.
+  4. Automated Testing (131/131 passing, 100% pass rate):
+     - `GoalProgressCalculatorTest.kt`: 8 tests (0 balance, 25% progress, 99% cap, 100% completion, clamping >100%, defensive 0 target, defensive negative balance).
+     - `CreateGoalUseCaseTest.kt`: 5 tests (valid creation, blank title, title >50 chars, zero amount, non-existent pig).
+     - `ObserveGoalsUseCaseTest.kt`: 3 tests (reactive balance calculation, active-first ordering, empty state).
+     - `DeleteGoalUseCaseTest.kt`: 2 tests (delegation, error handling).
+     - `GoalIntegrationTest.kt`: 1 comprehensive end-to-end test (Create goal ₹500 -> Save ₹100 -> 20% progress -> Save ₹400 -> 100% completed -> Delete goal -> verify pig balance & transactions intact).
+     - `GoalViewModelTest.kt`: 4 tests (reactive observation, delete success, delete error, clearError).
+     - `CreateGoalViewModelTest.kt`: 7 tests (initial state, enabled state, digit filtering, blank error, zero error, success event, error event).
+     - `GoalRepositoryImplTest.kt`: 5 tests (create, getById, delete, observe, not found).
+  5. Build & Lint:
+     - `assembleDebug`: SUCCESSFUL.
+     - `testDebugUnitTest`: 131/131 PASS.
+     - `lintDebug`: 0 errors, 0 warnings.
+  6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A (Empty State): Fresh install -> opened Goals -> verified "No goals yet" and "Create Your First Goal 🎯" button: PASS.
+     - Scenario B (Create Goal): Created "New Headphones", ₹500 -> goal appeared in list with 0%, ₹0 / ₹500: PASS.
+     - Scenario C (Save Money & Reactive Progress): Saved ₹100 -> opened Goals -> verified reactively updated to ₹100 / ₹500 (20%), ₹400 to go without manual refresh: PASS.
+     - Scenario D (Continue Saving & Completion): Saved ₹400 -> verified goal reached ₹500 / ₹500 (100%), Completed 🎉 badge, and "Goal achieved!": PASS.
+     - Scenario E (Persistence Across Restart): Force-stopped and restarted app -> verified goal, completion state, and pig balance persisted: PASS.
+     - Scenario F (Multiple Goals & Ordering): Created second goal "Emergency Fund" (₹2000) -> verified active goal displayed first (25%, ₹1500 to go), completed goal displayed second (100%): PASS.
+     - Scenario G (Safe Delete Goal): Deleted "New Headphone" via confirmation dialog -> verified goal removed, pig balance remained exactly ₹500, transactions intact: PASS.
+     - Scenario H (Validation): Tested blank name and ₹0 target -> verified inline validation errors and disabled submit action: PASS.
+     - Scenario I (Dark Mode): Captured screenshots in night mode -> verified contrast, theme consistency, and accessibility: PASS.
+     - Scenario J (Navigation Flow): Verified `Home -> Goals -> Create Goal -> Goals -> Home` back stack integrity: PASS.
+     - Scenario K (Logcat Audit): `adb logcat -d -s AndroidRuntime:E` verified 0 crashes, 0 fatal exceptions, 0 SQLite errors: PASS.
+- **Status**: COMPLETE & VERIFIED

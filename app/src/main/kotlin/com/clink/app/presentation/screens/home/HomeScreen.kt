@@ -417,6 +417,140 @@ fun HomeScreen(
                 }
             }
 
+            // 3.5. Compact Active Goal Summary (if user has a goal)
+            uiState.activeGoal?.let { goalProgress ->
+                item {
+                    ClinkCard(
+                        shape = MaterialTheme.shapes.medium,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        elevation = ClinkDimens.current.elevationLevel1,
+                        onClick = onNavigateToGoals
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(ClinkDimens.current.spacingMd)
+                                .semantics {
+                                    contentDescription = "Active goal: ${goalProgress.goal.title}, ${goalProgress.progressPercent} percent complete. Tap to view goals."
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "🎯 YOUR GOAL",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        letterSpacing = 1.sp
+                                    )
+                                    if (goalProgress.isCompleted) {
+                                        Spacer(modifier = Modifier.width(ClinkDimens.current.spacingXs))
+                                        Text(
+                                            text = "Completed 🎉",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .clip(MaterialTheme.shapes.extraSmall)
+                                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "View Goals",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = goalProgress.goal.title,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${goalProgress.progressPercent}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+                            LinearProgressIndicator(
+                                progress = { goalProgress.progressFraction },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(MaterialTheme.shapes.small),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    MoneyDisplay(
+                                        money = goalProgress.currentAmount,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = " / ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    MoneyDisplay(
+                                        money = goalProgress.targetAmount,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Text(
+                                    text = if (goalProgress.isCompleted) "Achieved!" else "${goalProgress.remainingAmount.formatDisplay()} left",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 12.sp,
+                                    color = if (goalProgress.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // 4. Recent Activity Section
             item {
                 ClinkSectionHeader(

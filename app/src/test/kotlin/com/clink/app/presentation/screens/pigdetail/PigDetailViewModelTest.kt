@@ -5,6 +5,7 @@ import com.clink.app.domain.model.Money
 import com.clink.app.domain.model.Pig
 import com.clink.app.domain.model.PigState
 import com.clink.app.domain.repository.PigRepository
+import com.clink.app.domain.usecase.ObserveGoalsUseCase
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
@@ -27,14 +28,17 @@ class PigDetailViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var mockPigRepository: PigRepository
+    private lateinit var mockObserveGoalsUseCase: ObserveGoalsUseCase
     private val pigFlow = MutableStateFlow<Pig?>(null)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         mockPigRepository = mockk(relaxed = true)
+        mockObserveGoalsUseCase = mockk(relaxed = true)
 
         every { mockPigRepository.getPigById(1L) } returns pigFlow
+        every { mockObserveGoalsUseCase(any()) } returns MutableStateFlow(emptyList())
     }
 
     @After
@@ -45,7 +49,7 @@ class PigDetailViewModelTest {
     @Test
     fun `loads pig reactively from repository by savedStateHandle pigId`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("pigId" to "1"))
-        val viewModel = PigDetailViewModel(mockPigRepository, savedStateHandle)
+        val viewModel = PigDetailViewModel(mockPigRepository, mockObserveGoalsUseCase, savedStateHandle)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.pig.collect()
         }
@@ -74,7 +78,7 @@ class PigDetailViewModelTest {
     @Test
     fun `handles missing or invalid pigId by defaulting to 1L`() = runTest {
         val savedStateHandle = SavedStateHandle(emptyMap())
-        val viewModel = PigDetailViewModel(mockPigRepository, savedStateHandle)
+        val viewModel = PigDetailViewModel(mockPigRepository, mockObserveGoalsUseCase, savedStateHandle)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.pig.collect()
         }

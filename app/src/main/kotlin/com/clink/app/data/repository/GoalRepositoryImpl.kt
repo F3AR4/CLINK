@@ -15,16 +15,20 @@ class GoalRepositoryImpl @Inject constructor(
     private val goalDao: GoalDao
 ) : GoalRepository {
 
-    override fun getGoalsForPig(pigId: Long): Flow<List<Goal>> {
+    override fun observeGoalsForPig(pigId: Long): Flow<List<Goal>> {
         return goalDao.getGoalsForPig(pigId).map { list ->
             list.map { it.toDomain() }
         }
     }
 
-    override fun getAllGoals(): Flow<List<Goal>> {
+    override fun observeAllGoals(): Flow<List<Goal>> {
         return goalDao.getAllGoals().map { list ->
             list.map { it.toDomain() }
         }
+    }
+
+    override suspend fun getGoalById(goalId: Long): Goal? {
+        return goalDao.getGoalById(goalId)?.toDomain()
     }
 
     override suspend fun createGoal(goal: Goal): Long {
@@ -33,16 +37,6 @@ class GoalRepositoryImpl @Inject constructor(
 
     override suspend fun updateGoal(goal: Goal) {
         goalDao.updateGoal(GoalEntity.fromDomain(goal))
-    }
-
-    override suspend fun updateSavedAmount(goalId: Long, newSavedAmount: Money) {
-        val currentGoals = goalDao.getAllGoals()
-        // Simple update: calculate if reached
-        goalDao.updateSavedAmount(
-            id = goalId,
-            savedPaise = newSavedAmount.paise,
-            isCompleted = false // Can be evaluated based on target
-        )
     }
 
     override suspend fun deleteGoal(goalId: Long) {

@@ -53,3 +53,12 @@
 16. **Keyboard Overlay Handling in Automated UI Testing**:
    - When entering text into an `OutlinedTextField` during UI tests, the Android software keyboard window remains elevated and captures touch events intended for lower screen components (such as bottom-anchored action buttons).
    - Explicitly dispatching `adb shell input keyevent 4` (KEYCODE_BACK) dismisses the soft keyboard window while keeping the current activity on screen, allowing subsequent coordinate taps to reach their intended target buttons without occlusion.
+17. **MockK Value Class Negative Random Values**:
+   - MockK's `any()` on an inline value class (`Money(paise: Long)`) passes random 64-bit Long bits, which can be negative (`paise < 0`).
+   - If the inline class's `init` block asserts `require(paise >= 0)`, MockK generates an `IllegalArgumentException` during stubbing or invocation matching.
+   - Solution: Use concrete non-negative instances (`Money.zero`, `Money.fromRupees(10)`) or `match { it.isPositive }` rather than unconstrained `any()`.
+18. **Parallel Gradle Daemon File Lock Contention in Windows/KSP**:
+   - Spawning concurrent Gradle commands in separate background processes on Windows causes file lock contention on KSP / Kotlin compiler caches (`java.nio.file.NoSuchFileException` on `.kotlin\ksp`).
+   - Always execute Gradle tasks sequentially (`testDebugUnitTest` -> `assembleDebug` -> `lintDebug`) or wait for the prior process to finish.
+19. **Authoritative State vs. Derived Progress**:
+   - Instead of storing a mutable `savedAmount` on a Goal entity (which inevitably drifts or desynchronizes when transactions occur), deriving `GoalProgress` reactively by combining `Pig.balance` with `Goal.targetAmount` in `ObserveGoalsUseCase` ensures 100% mathematical consistency without secondary balance tables.

@@ -8,6 +8,7 @@ import com.clink.app.domain.model.TransactionStatus
 import com.clink.app.domain.model.TransactionType
 import com.clink.app.domain.repository.PigRepository
 import com.clink.app.domain.usecase.GetTransactionsUseCase
+import com.clink.app.domain.usecase.ObserveGoalsUseCase
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -33,6 +34,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var mockPigRepository: PigRepository
     private lateinit var mockGetTransactionsUseCase: GetTransactionsUseCase
+    private lateinit var mockObserveGoalsUseCase: ObserveGoalsUseCase
     private val pigsFlow = MutableStateFlow<List<Pig>>(emptyList())
     private val transactionsFlow = MutableStateFlow<List<Transaction>>(emptyList())
 
@@ -41,9 +43,11 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         mockPigRepository = mockk(relaxed = true)
         mockGetTransactionsUseCase = mockk(relaxed = true)
+        mockObserveGoalsUseCase = mockk(relaxed = true)
 
         coEvery { mockPigRepository.getAllPigs() } returns pigsFlow
         every { mockGetTransactionsUseCase() } returns transactionsFlow
+        every { mockObserveGoalsUseCase() } returns MutableStateFlow(emptyList())
     }
 
     @After
@@ -53,7 +57,7 @@ class HomeViewModelTest {
 
     @Test
     fun `init calls getOrCreateDefaultPig to ensure idempotent startup`() = runTest {
-        HomeViewModel(mockPigRepository, mockGetTransactionsUseCase)
+        HomeViewModel(mockPigRepository, mockGetTransactionsUseCase, mockObserveGoalsUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { mockPigRepository.getOrCreateDefaultPig() }
@@ -61,7 +65,7 @@ class HomeViewModelTest {
 
     @Test
     fun `emits primary pig and progression reactively when pigs flow updates`() = runTest {
-        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase)
+        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase, mockObserveGoalsUseCase)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -91,7 +95,7 @@ class HomeViewModelTest {
 
     @Test
     fun `emits recent transactions limited to maximum 3 items`() = runTest {
-        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase)
+        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase, mockObserveGoalsUseCase)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -116,7 +120,7 @@ class HomeViewModelTest {
 
     @Test
     fun `handles empty transactions with empty recentTransactions list`() = runTest {
-        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase)
+        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase, mockObserveGoalsUseCase)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -130,7 +134,7 @@ class HomeViewModelTest {
 
     @Test
     fun `emits full state when pig reaches top savings tier`() = runTest {
-        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase)
+        val viewModel = HomeViewModel(mockPigRepository, mockGetTransactionsUseCase, mockObserveGoalsUseCase)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }

@@ -2,77 +2,37 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-008: Add Money Experience
-- **Status**: COMPLETE & VERIFIED (APK assembled, 96/96 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-009: Goals Engine
+- **Status**: COMPLETE & VERIFIED (APK assembled, 131/131 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
 - **Git Version Control**: INITIALIZED & CLEAN
 - **Domain Layer**: VERIFIED (Pure Kotlin, zero UI/Room/Payment leaks, paise Long representation enforced, Math.addExact overflow protection)
-  - Models: `Money` (with `isPositive` and `isZero` helpers), `Pig`, `PigState`, `PigProgression`, `PigStateCalculator`, `Transaction`, `Goal`, `User`
-  - Repositories: `PigRepository` (with `addSavings` atomic method & thread-safe `getOrCreateDefaultPig`), `TransactionRepository` (with `observeTransactions`), `GoalRepository`, `PaymentRepository`
-  - Use Cases: `AddMoneyUseCase` (hardened with positive paise check, pig existence check, overflow protection, atomic persistence), `GetTransactionsUseCase` (clean domain boundary for transaction history), `GetPigSummaryUseCase`, `GetPrimaryPigUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
+  - Models: `Money` (with `isPositive` and `isZero` helpers), `Pig`, `PigState`, `PigProgression`, `PigStateCalculator`, `Transaction`, `Goal`, `GoalProgress`, `GoalProgressCalculator`, `User`
+  - Repositories: `PigRepository`, `TransactionRepository`, `GoalRepository` (with `observeGoalsForPig`, `observeAllGoals`, `getGoalById`, `createGoal`, `updateGoal`, `deleteGoal`), `PaymentRepository`
+  - Use Cases: `CreateGoalUseCase` (title trimming, max 50 chars, positive target amount, pig check), `ObserveGoalsUseCase` (reactive derivation from authoritative pig balance, active-first ordering), `DeleteGoalUseCase` (safe goal deletion preserving pig balance and transactions), `AddMoneyUseCase`, `GetTransactionsUseCase`, `GetPigSummaryUseCase`, `GetPrimaryPigUseCase`, `GetOnboardingStateUseCase`, `CompleteOnboardingUseCase`
 - **Data Layer**: VERIFIED (Room v1 schema, atomic `withTransaction` persistence, idempotent default pig initialization via Mutex, DataStore preferences)
-  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao` (deterministic secondary ordering: `ORDER BY timestamp DESC, id DESC`), `GoalDao`
-  - Database: `ClinkDatabase` (`clink.db`, Room v1)
-  - Preferences: `UserPreferencesRepository` (DataStore with IO error recovery and clean domain abstraction)
-  - Repository Implementations: `PigRepositoryImpl` (atomic savings via `withTransaction`, unified single committed timestamp, note trimming and sanitization, mutex-guarded default pig creation), `TransactionRepositoryImpl`, `GoalRepositoryImpl`, `UserPreferencesRepositoryImpl`, `FakePaymentRepository`
+  - Room Entities & DAOs: `PigEntity`, `TransactionEntity`, `GoalEntity`, `PigDao`, `TransactionDao`, `GoalDao` (secondary ordering: `ORDER BY createdAt DESC, id DESC`)
+  - Database: `ClinkDatabase` (`clink.db`, Room v1, zero destructive migrations)
+  - Repository Implementations: `GoalRepositoryImpl`, `PigRepositoryImpl`, `TransactionRepositoryImpl`, `UserPreferencesRepositoryImpl`, `FakePaymentRepository`
 - **Dependency Injection**: VERIFIED (Hilt 2.54 modules compile and inject dependencies)
-  - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule` (providing `GetTransactionsUseCase`)
+  - `DatabaseModule`, `RepositoryModule`, `DataStoreModule`, `UseCaseModule` (providing `CreateGoalUseCase`, `ObserveGoalsUseCase`, `DeleteGoalUseCase`)
 - **Presentation Layer**: VERIFIED (Material 3 CLINK Design System + Brand Identity)
-  - Root Activity & Routing: `MainActivity` with `MainViewModel` (state-driven splash/destination routing eliminating screen flicker)
-  - Design Tokens:
-    - Colors: Light and Dark semantic palette (`ClinkPink`, `ClinkNavy`, `ClinkTeal`, `CoinGold`, `PiggyBlush`, `SuccessGreen`, `ErrorRed`, accessible surface/background colors)
-    - Typography Scale: Display, Headline, Title, Body, Label
-    - Shapes: 8.dp (small), 12.dp (medium), 16.dp (large), 24.dp (extra-large), 32.dp (pill)
-    - Dimensions: Spacing (`none` to `xxxl`), icon sizes (`small`, `medium`, `large`), min touch target (48.dp), elevations
-    - Motion: Standard durations (`Fast`, `Normal`, `Slow`), easings, and spring specs
-  - Reusable Components:
-    - `MoneyDisplay`: Scaled currency symbol (₹) and fractional paise formatting
-    - `ClinkButton` & `ClinkOutlinedButton`: Accessible height, rounded pill shape, progress indicator loading state
-    - `ClinkTopBar`: Accessible 48dp navigation actions, brand header
-    - `ClinkCard`: Standardized surface with subtle border and elevation
-    - `ClinkAmountChip`: Accessible chip with active state border, checkmark, and animation
-    - `ClinkPigIllustration`: Compose-native vector mascot dynamically reflecting `PigState` (`NEW`, `GROWING`, `HEALTHY`, `FULL`)
-    - `ClinkSectionHeader`: Section titles with optional action buttons
-    - `ClinkEmptyState`: Pig mascot empty state with call-to-action
+  - Navigation: `ClinkNavGraph` with `Screen.Goals` and `Screen.CreateGoal` routes, back stack integrity preserved
   - Screens:
-    - `AddMoneyScreen`: Micro-saving hero with state-aware mascot, large `MoneyDisplay`, 4 quick-select chips (₹10, ₹20, ₹50, ₹100), custom Rupee input with numeric keyboard, real-time validation UX, optional note with character counter (0/50), animated celebration banner, `ClinkButton` with double-tap lockout, and smooth return navigation to Home
-    - `HomeScreen`: Interactive Primary Pig hero card with state badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar, in-dashboard "Save Money 🐷" CTA, shortcuts to History and Goals, Recent Activity section showing 3 most recent transactions with relative timestamps, encouraging empty guidance for ₹0 balance, and accessible Extended FAB
-    - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
-    - `PigDetailScreen`: Mascot hero, progression status, tier progress bar, detailed metadata card, and actions
-    - `HistoryScreen`: Powered by `HistoryViewModel` injecting `GetTransactionsUseCase`, displaying newest-first transactions with credit pills (+₹) and formatted timestamps
-    - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (96 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
-  - `AddMoneyViewModelTest.kt` (16/16 pass, comprehensive quick amounts, custom amounts, validations, notes, conversions, double-tap suppression, resetState)
-  - `HomeViewModelTest.kt` (3/3 pass)
-  - `MoneyTest.kt` (11/11 pass)
-  - `TransactionDomainTest.kt` (3/3 pass)
-  - `AddMoneyUseCaseTest.kt` (7/7 pass)
-  - `GetTransactionsUseCaseTest.kt` (2/2 pass)
-  - `SavingsEnginePersistenceTest.kt` (4/4 pass)
-  - `TransactionAtomicityTest.kt` (7/7 pass)
-  - `HistoryViewModelTest.kt` (2/2 pass)
-  - `FakePaymentRepositoryTest.kt` (3/3 pass)
-  - `ClinkThemeTest.kt` (4/4 pass)
-  - `ClinkComponentsTest.kt` (3/3 pass)
-  - `UserPreferencesRepositoryTest.kt` (5/5 pass)
-  - `OnboardingUseCasesTest.kt` (3/3 pass)
-  - `OnboardingViewModelTest.kt` (5/5 pass)
-  - `MainViewModelTest.kt` (3/3 pass)
-  - `SavingsIsolationTest.kt` (1/1 pass)
-  - `PigStateCalculatorTest.kt` (7/7 pass)
-  - `PigProgressionPersistenceTest.kt` (3/3 pass)
-  - `PigDetailViewModelTest.kt` (2/2 pass)
-- **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
-- **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - Scenario A: Open Add Money -> screen loads with mascot, quick chips, custom input, note field, save button: PASS
-  - Scenario B: Quick amount selection -> ₹20 selected and displayed: PASS
-  - Scenario C: Save ₹20 with note -> returned to Home, balance ₹90 (+₹20), transaction recorded: PASS
-  - Scenario D: Custom amount -> entered ₹35, saved -> balance ₹125 (+₹35), 25% progress: PASS
-  - Scenario E: Invalid amount -> entered 0, inline error "Amount must be greater than ₹0", button disabled, no transaction: PASS
-  - Scenario F: Rapid taps -> 4 rapid taps produced exactly 1 save (balance ₹135, +₹10): PASS
-  - Scenario G: Persistence & restart -> force stop and relaunch verified ₹135 balance and all transactions: PASS
-  - Scenario H: History screen -> all transactions displayed newest-first with custom notes and credit pills: PASS
-  - Scenario I: Dark mode -> night mode verified via screenshot for contrast, surfaces, and chips: PASS
-  - Scenario J: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS
+    - `GoalScreen`: Goal progress cards, reactive progress updates derived from Pig balance, active goal emphasis, completed badge treatment, empty state with "Create Your First Goal 🎯", safe delete action with confirmation dialog, floating action button
+    - `CreateGoalScreen`: Mascot illustration, goal name input with 0/50 counter, target amount in whole Rupees, real-time input validation, double-tap protected submit button
+    - `HomeScreen`: Integrated compact active goal summary card (displaying target, progress bar, current / target, and remaining amount)
+    - `PigDetailScreen`: Integrated concise goal summary card with progress bar
+    - `AddMoneyScreen`, `OnboardingScreen`, `HistoryScreen`
+- **Testing**: VERIFIED (131 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat testDebugUnitTest`)
+  - `GoalProgressCalculatorTest.kt` (8/8 pass)
+  - `CreateGoalUseCaseTest.kt` (5/5 pass)
+  - `ObserveGoalsUseCaseTest.kt` (3/3 pass)
+  - `DeleteGoalUseCaseTest.kt` (2/2 pass)
+  - `GoalIntegrationTest.kt` (1/1 pass)
+  - `GoalViewModelTest.kt` (4/4 pass)
+  - `CreateGoalViewModelTest.kt` (7/7 pass)
+  - `GoalRepositoryImplTest.kt` (5/5 pass)
+  - All existing tests (Money, AddMoney, Home, PigDetail, History, Onboarding, Room, DataStore) continue passing 100%

@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.clink.app.presentation.screens.addmoney.AddMoneyScreen
+import com.clink.app.presentation.screens.goals.CreateGoalScreen
 import com.clink.app.presentation.screens.goals.GoalScreen
 import com.clink.app.presentation.screens.history.HistoryScreen
 import com.clink.app.presentation.screens.home.HomeScreen
@@ -82,6 +83,23 @@ fun ClinkNavGraph(
 
         composable(Screen.Goals.route) {
             GoalScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCreateGoal = {
+                    navController.navigate(Screen.CreateGoal.createRoute())
+                }
+            )
+        }
+
+        composable(
+            route = Screen.CreateGoal.route,
+            arguments = listOf(
+                navArgument("pigId") {
+                    type = NavType.StringType
+                    defaultValue = "1"
+                }
+            )
+        ) {
+            CreateGoalScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -101,6 +119,9 @@ fun ClinkNavGraph(
                 },
                 onNavigateToHistory = { pigId ->
                     navController.navigate(Screen.History.createRoute(pigId))
+                },
+                onNavigateToGoals = {
+                    navController.navigate(Screen.Goals.route)
                 }
             )
         }

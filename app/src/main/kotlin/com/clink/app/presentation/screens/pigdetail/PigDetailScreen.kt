@@ -47,6 +47,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import com.clink.app.domain.model.GoalProgress
+import com.clink.app.domain.usecase.ObserveGoalsUseCase
+import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -55,11 +58,20 @@ import javax.inject.Inject
 @HiltViewModel
 class PigDetailViewModel @Inject constructor(
     pigRepository: PigRepository,
+    observeGoalsUseCase: ObserveGoalsUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val pigId: Long = savedStateHandle.get<String>("pigId")?.toLongOrNull() ?: 1L
 
     val pig: StateFlow<Pig?> = pigRepository.getPigById(pigId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    val activeGoal: StateFlow<GoalProgress?> = observeGoalsUseCase(pigId)
+        .map { goals -> goals.firstOrNull { !it.isCompleted } ?: goals.firstOrNull() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -72,9 +84,11 @@ fun PigDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAddMoney: (pigId: Long) -> Unit,
     onNavigateToHistory: (pigId: Long) -> Unit,
+    onNavigateToGoals: () -> Unit = {},
     viewModel: PigDetailViewModel = hiltViewModel()
 ) {
     val pig by viewModel.pig.collectAsStateWithLifecycle()
+    val activeGoal by viewModel.activeGoal.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -215,6 +229,71 @@ fun PigDetailScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                // Goal Summary Card (if active goal exists)
+                activeGoal?.let { goal ->
+                    Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
+
+                    ClinkCard(
+                        shape = MaterialTheme.shapes.large,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        elevation = ClinkDimens.current.elevationLevel1,
+                        onClick = onNavigateToGoals
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(ClinkDimens.current.spacingLg)
+                        ) {
+                            ClinkSectionHeader(
+                                title = "Savings Target",
+                                subtitle = if (goal.isCompleted) "Completed 🎉" else "${goal.progressPercent}% achieved",
+                                actionText = "View Goals",
+                                onActionClick = onNavigateToGoals
+                            )
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
+
+                            Text(
+                                text = goal.goal.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
+
+                            LinearProgressIndicator(
+                                progress = { goal.progressFraction },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(MaterialTheme.shapes.small),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${goal.currentAmount.formatDisplay()} / ${goal.targetAmount.formatDisplay()}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (goal.isCompleted) "Goal Achieved!" else "${goal.remainingAmount.formatDisplay()} to go",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (goal.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
 

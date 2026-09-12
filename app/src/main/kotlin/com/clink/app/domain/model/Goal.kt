@@ -2,6 +2,8 @@ package com.clink.app.domain.model
 
 /**
  * Domain model representing a savings goal associated with a Pig.
+ * The goal's progress is derived reactively from the Pig's authoritative balance
+ * using [GoalProgressCalculator] rather than an independent mutable balance.
  */
 data class Goal(
     val id: Long = 0L,
@@ -12,8 +14,4 @@ data class Goal(
     val deadline: Long? = null,
     val isCompleted: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
-) {
-    val progressPercentage: Float
-        get() = if (targetAmount.paise == 0L) 1.0f
-        else (savedAmount.paise.toFloat() / targetAmount.paise.toFloat()).coerceIn(0f, 1f)
-}
+)
