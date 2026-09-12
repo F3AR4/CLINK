@@ -2,8 +2,8 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-007: Home Dashboard
-- **Status**: COMPLETE & VERIFIED (APK assembled, 85/85 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-008: Add Money Experience
+- **Status**: COMPLETE & VERIFIED (APK assembled, 96/96 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -37,21 +37,21 @@
     - `ClinkSectionHeader`: Section titles with optional action buttons
     - `ClinkEmptyState`: Pig mascot empty state with call-to-action
   - Screens:
+    - `AddMoneyScreen`: Micro-saving hero with state-aware mascot, large `MoneyDisplay`, 4 quick-select chips (₹10, ₹20, ₹50, ₹100), custom Rupee input with numeric keyboard, real-time validation UX, optional note with character counter (0/50), animated celebration banner, `ClinkButton` with double-tap lockout, and smooth return navigation to Home
     - `HomeScreen`: Interactive Primary Pig hero card with state badge (`🐣 New`, `🌱 Growing`, `✨ Healthy`, `🏆 Full`), animated milestone progression bar, in-dashboard "Save Money 🐷" CTA, shortcuts to History and Goals, Recent Activity section showing 3 most recent transactions with relative timestamps, encouraging empty guidance for ₹0 balance, and accessible Extended FAB
     - `OnboardingScreen`: Value proposition cards, vector mascot, double-tap protected CTA button, complete dark mode support
     - `PigDetailScreen`: Mascot hero, progression status, tier progress bar, detailed metadata card, and actions
-    - `AddMoneyScreen`: Amount hero, quick select chip grid (₹10, ₹20, ₹50, ₹100), mascot banner, Clink CTA with `isProcessing` lock out preventing post-success rapid double taps
     - `HistoryScreen`: Powered by `HistoryViewModel` injecting `GetTransactionsUseCase`, displaying newest-first transactions with credit pills (+₹) and formatted timestamps
     - `GoalScreen`: Goal progress cards and empty state
-- **Testing**: VERIFIED (85 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
-  - `HomeViewModelTest.kt` (3/3 pass, including recent transactions query verification)
+- **Testing**: VERIFIED (96 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat test`)
+  - `AddMoneyViewModelTest.kt` (16/16 pass, comprehensive quick amounts, custom amounts, validations, notes, conversions, double-tap suppression, resetState)
+  - `HomeViewModelTest.kt` (3/3 pass)
   - `MoneyTest.kt` (11/11 pass)
   - `TransactionDomainTest.kt` (3/3 pass)
   - `AddMoneyUseCaseTest.kt` (7/7 pass)
   - `GetTransactionsUseCaseTest.kt` (2/2 pass)
   - `SavingsEnginePersistenceTest.kt` (4/4 pass)
   - `TransactionAtomicityTest.kt` (7/7 pass)
-  - `AddMoneyViewModelTest.kt` (5/5 pass)
   - `HistoryViewModelTest.kt` (2/2 pass)
   - `FakePaymentRepositoryTest.kt` (3/3 pass)
   - `ClinkThemeTest.kt` (4/4 pass)
@@ -66,11 +66,13 @@
   - `PigDetailViewModelTest.kt` (2/2 pass)
 - **Static Analysis / Lint**: VERIFIED (`.\gradlew.bat lint` reports 0 errors, 0 warnings)
 - **Live Runtime Verification**: VERIFIED on `emulator-5554` (`medium_phone`, Android 16 / API 36)
-  - Scenario A: Fresh Home ₹0 state -> displays ₹0, `🐣 New`, first-save guidance card, `Save First ₹10 🐷` CTA: PASS
-  - Scenario B: Save ₹20 -> balance ₹20, `🌱 Growing`, 4% toward ₹500, Recent Activity showing 1 transaction: PASS
-  - Scenario C: Save ₹50 -> balance ₹70, `🌱 Growing`, 14% toward ₹500, Recent Activity showing 2 transactions: PASS
-  - Scenario D: Navigation shortcuts -> History, Goals, and Primary Pig Detail screens open and return cleanly: PASS
-  - Scenario E: App restart -> balance ₹70, `🌱 Growing`, 2 transactions preserved without duplicates: PASS
-  - Scenario F: Dark mode -> night mode toggled cleanly, contrast and styling validated via screenshot: PASS
-  - Scenario G: Long balance formatting -> `MoneyDisplay` verified without clipping: PASS
-  - Scenario H: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS
+  - Scenario A: Open Add Money -> screen loads with mascot, quick chips, custom input, note field, save button: PASS
+  - Scenario B: Quick amount selection -> ₹20 selected and displayed: PASS
+  - Scenario C: Save ₹20 with note -> returned to Home, balance ₹90 (+₹20), transaction recorded: PASS
+  - Scenario D: Custom amount -> entered ₹35, saved -> balance ₹125 (+₹35), 25% progress: PASS
+  - Scenario E: Invalid amount -> entered 0, inline error "Amount must be greater than ₹0", button disabled, no transaction: PASS
+  - Scenario F: Rapid taps -> 4 rapid taps produced exactly 1 save (balance ₹135, +₹10): PASS
+  - Scenario G: Persistence & restart -> force stop and relaunch verified ₹135 balance and all transactions: PASS
+  - Scenario H: History screen -> all transactions displayed newest-first with custom notes and credit pills: PASS
+  - Scenario I: Dark mode -> night mode verified via screenshot for contrast, surfaces, and chips: PASS
+  - Scenario J: Logcat audit (`adb logcat -d -s AndroidRuntime:E`) -> 0 fatal exceptions: PASS

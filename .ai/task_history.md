@@ -266,4 +266,36 @@
      - Scenario H (Logcat audit): `adb logcat -d -s AndroidRuntime:E` confirmed 0 fatal exceptions: PASS.
 - **Status**: COMPLETE & VERIFIED
 
+### TASK-008: Add Money Experience Polish
+- **Date**: 2026-09-12
+- **Goal**: Complete and polish the CLINK Add Money experience as the primary micro-saving action: simple, fast, satisfying, trustworthy, accessible, with real-time numeric validation, quick denominations, custom amount support, optional note with counter, celebration banner, and zero floating-point arithmetic.
+- **Actions Taken**:
+  1. Presentation Layer Polish:
+     - Extended `AddMoneyUiState` with `customAmountText`, `isCustomAmount`, `noteText`, `validationError`, `savedAmount`, and `canSave`.
+     - Added `onSelectQuickAmount(amount)` toggling between ₹10, ₹20, ₹50, ₹100 chips.
+     - Added `onCustomAmountChange(rawText)` with strict integer-only parsing, range checks (₹1 to ₹1,00,000), inline error feedback ("Amount must be greater than ₹0", "Please enter an amount"), and pure `Money` integer paise arithmetic (`Money.fromRupees()`).
+     - Added `onNoteChange(text)` with 50-character limit and character counter.
+     - Redesigned `AddMoneyScreen` with vertical scrolling, piggy mascot header, `MoneyDisplay` hero card, quick denomination row, custom Rupee input, note field, animated celebration banner on save, and `ClinkButton` with disabled state and double-tap lockout.
+     - Added `resetState()` for clean form reuse.
+  2. Automated Testing:
+     - Expanded `AddMoneyViewModelTest` to 16 unit tests covering initial state, quick amounts, custom amounts, conversion fidelity (₹1 -> 100, ₹10 -> 1000, ₹99 -> 9900, ₹500 -> 50000 paise), empty/zero/overflow validations, non-numeric character filtering, note trimming and truncation, double-tap lockout, event emissions, and state reset.
+     - Total project unit tests: 96/96 PASS (100% pass rate).
+  3. Build & Lint:
+     - `assembleDebug`: SUCCESS.
+     - `test`: 96/96 PASS.
+     - `lint`: 0 errors, 0 warnings.
+  4. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A (Open Add Money): Screen loaded with mascot, quick chips, custom input, note field, save button: PASS.
+     - Scenario B (Quick Amount): Selected ₹20 -> updated amount display, chip highlighted: PASS.
+     - Scenario C (Save Quick Amount with Note): Saved ₹20 with note "CCoffee save" -> returned to Home, balance updated from ₹70 to ₹90, transaction recorded: PASS.
+     - Scenario D (Custom Amount): Entered custom ₹35 -> saved -> balance updated from ₹90 to ₹125 (25% progress): PASS.
+     - Scenario E (Invalid Amount Validation): Entered "0" -> inline error "Amount must be greater than ₹0", button disabled (`enabled="false"`), no transaction recorded: PASS.
+     - Scenario F (Rapid Double Taps): Rapid consecutive Save taps -> exactly 1 save processed, balance incremented by exactly ₹10 to ₹135: PASS.
+     - Scenario G (Persistence & App Restart): Force-stopped and relaunched -> balance ₹135, pig state `🌱 Growing`, all transactions intact: PASS.
+     - Scenario H (History Screen): Opened History -> all 5 transactions rendered in reverse-chronological order with notes and credit pill indicators: PASS.
+     - Scenario I (Dark Mode Contrast & Theming): Toggled night mode, captured screenshot -> verified readability, surface styling, and chip highlights: PASS.
+     - Scenario J (Logcat Audit): `adb logcat -d -s AndroidRuntime:E` verified 0 fatal exceptions: PASS.
+- **Status**: COMPLETE & VERIFIED
+
+
 

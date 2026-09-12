@@ -1,5 +1,63 @@
 # CLINK Testing History
  
+## TASK-008 Add Money Experience Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **96/96 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `AddMoneyViewModelTest`: 16/16 (Initial state, quick amounts, custom amounts, conversion fidelity ₹1/₹10/₹99/₹500, empty/zero/overflow validations, non-numeric character filtering, note trimming & capping at 50, double-tap lockout, event emissions, resetState)
+  - `HomeViewModelTest`: 3/3
+  - `MoneyTest`: 11/11
+  - `TransactionDomainTest`: 3/3
+  - `AddMoneyUseCaseTest`: 7/7
+  - `GetTransactionsUseCaseTest`: 2/2
+  - `SavingsEnginePersistenceTest`: 4/4
+  - `TransactionAtomicityTest`: 7/7
+  - `HistoryViewModelTest`: 2/2
+  - `FakePaymentRepositoryTest`: 3/3
+  - `ClinkThemeTest`: 4/4
+  - `ClinkComponentsTest`: 3/3
+  - `UserPreferencesRepositoryTest`: 5/5
+  - `OnboardingUseCasesTest`: 3/3
+  - `OnboardingViewModelTest`: 5/5
+  - `MainViewModelTest`: 3/3
+  - `SavingsIsolationTest`: 1/1
+  - `PigStateCalculatorTest`: 7/7
+  - `PigProgressionPersistenceTest`: 3/3
+  - `PigDetailViewModelTest`: 2/2
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lint`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`)
+1. **Scenario A - Open Add Money**:
+   - Screen loaded with mascot, quick chips (₹10, ₹20, ₹50, ₹100), custom input, note field, save button. (PASS)
+2. **Scenario B - Quick Amount Selection**:
+   - Selected ₹20 -> updated amount display, chip highlighted. (PASS)
+3. **Scenario C - Save Quick Amount with Note**:
+   - Saved ₹20 with note "CCoffee save" -> returned to Home, balance updated from ₹70 to ₹90, transaction recorded. (PASS)
+4. **Scenario D - Custom Amount**:
+   - Entered custom ₹35 -> saved -> balance updated from ₹90 to ₹125 (25% progress). (PASS)
+5. **Scenario E - Invalid Amount Validation**:
+   - Entered "0" -> inline error "Amount must be greater than ₹0", button disabled (`enabled="false"`), no transaction recorded. (PASS)
+6. **Scenario F - Rapid Double Taps**:
+   - Rapid consecutive Save taps -> exactly 1 save processed, balance incremented by exactly ₹10 to ₹135. (PASS)
+7. **Scenario G - Persistence & App Restart**:
+   - Force-stopped and relaunched -> balance ₹135, pig state `🌱 Growing`, all transactions intact. (PASS)
+8. **Scenario H - History Screen**:
+   - Opened History -> all 5 transactions rendered in reverse-chronological order with notes and credit pill indicators. (PASS)
+9. **Scenario I - Dark Mode Contrast & Theming**:
+   - Toggled night mode, captured screenshot -> verified readability, surface styling, and chip highlights. (PASS)
+10. **Scenario J - Logcat Fatal Exception Audit**:
+    - `adb logcat -d -s AndroidRuntime:E` verified 0 fatal exceptions. (PASS)
+
 ## TASK-007 Home Dashboard Test Record (2026-09-12)
  
 ### Environment

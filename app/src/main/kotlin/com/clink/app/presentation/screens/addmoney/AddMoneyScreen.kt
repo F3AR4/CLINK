@@ -1,6 +1,10 @@
 package com.clink.app.presentation.screens.addmoney
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +16,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +35,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +53,8 @@ import com.clink.app.presentation.components.ClinkPigIllustration
 import com.clink.app.presentation.components.ClinkTopBar
 import com.clink.app.presentation.components.MoneyDisplay
 import com.clink.app.presentation.theme.ClinkDimens
+import com.clink.app.presentation.theme.SuccessGreen
+import kotlinx.coroutines.delay
 
 @Composable
 fun AddMoneyScreen(
@@ -44,12 +63,18 @@ fun AddMoneyScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is AddMoneyEvent.Success -> {
-                    Toast.makeText(context, "Added to CLINK! 🎉", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "CLINK! ${event.amount.formatDisplay()} saved 🐷",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    delay(600)
                     onNavigateBack()
                 }
                 is AddMoneyEvent.Error -> {
@@ -73,15 +98,17 @@ fun AddMoneyScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
-                .padding(ClinkDimens.current.spacingXl),
+                .verticalScroll(scrollState)
+                .padding(horizontal = ClinkDimens.current.spacingXl)
+                .padding(bottom = ClinkDimens.current.spacingXl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
 
             // Piggy mascot banner
-            ClinkPigIllustration(size = 88.dp)
+            ClinkPigIllustration(size = 80.dp)
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
 
             Text(
                 text = "Feed your Piggy",
@@ -96,18 +123,21 @@ fun AddMoneyScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXl))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
 
             // Amount Display Card
             ClinkCard(
                 shape = MaterialTheme.shapes.extraLarge,
                 containerColor = MaterialTheme.colorScheme.surface,
-                elevation = ClinkDimens.current.elevationLevel2
+                elevation = ClinkDimens.current.elevationLevel2,
+                modifier = Modifier.semantics {
+                    contentDescription = "Selected saving amount: ${uiState.selectedAmount.formatDisplay()}"
+                }
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = ClinkDimens.current.spacingXl),
+                        .padding(vertical = ClinkDimens.current.spacingLg, horizontal = ClinkDimens.current.spacingMd),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -117,17 +147,32 @@ fun AddMoneyScreen(
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp
                     )
-                    Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
+                    Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
                     MoneyDisplay(
                         money = uiState.selectedAmount,
                         fontSize = 44.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = if (uiState.validationError != null && uiState.selectedAmount.isZero) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
                     )
+
+                    if (uiState.validationError != null) {
+                        Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+                        Text(
+                            text = uiState.validationError!!,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXl))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
 
+            // Quick Select Denominations Header
             Text(
                 text = "Quick Select Denomination",
                 style = MaterialTheme.typography.labelLarge,
@@ -136,36 +181,191 @@ fun AddMoneyScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
 
             // Quick Amount Chips Grid: ₹10, ₹20, ₹50, ₹100
-            val amounts = listOf(Money.RS_10, Money.RS_20, Money.RS_50, Money.RS_100)
+            val quickAmounts = listOf(Money.RS_10, Money.RS_20, Money.RS_50, Money.RS_100)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingSm)
             ) {
-                amounts.forEach { amount ->
-                    val isSelected = uiState.selectedAmount == amount
+                quickAmounts.forEach { amount ->
+                    val isSelected = !uiState.isCustomAmount && uiState.selectedAmount == amount
                     ClinkAmountChip(
                         amount = amount,
                         isSelected = isSelected,
-                        onClick = { viewModel.onSelectAmount(amount) },
+                        onClick = { viewModel.onSelectQuickAmount(amount) },
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
+
+            // Custom Amount Input
+            Text(
+                text = "Or Enter Custom Amount",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+            OutlinedTextField(
+                value = uiState.customAmountText,
+                onValueChange = { viewModel.onCustomAmountChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Custom saving amount in Rupees" },
+                placeholder = { Text("e.g. 25, 35, 99") },
+                prefix = {
+                    Text(
+                        text = "₹ ",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = {
+                    if (uiState.customAmountText.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.onCustomAmountChange("") },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear custom amount",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
+                isError = uiState.isCustomAmount && uiState.validationError != null,
+                supportingText = {
+                    if (uiState.isCustomAmount && uiState.validationError != null) {
+                        Text(
+                            text = uiState.validationError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else {
+                        Text(
+                            text = "Whole Rupee amount (₹1 – ₹1,00,000)",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                shape = MaterialTheme.shapes.medium,
+                enabled = !uiState.isProcessing,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
+
+            // Note (Optional)
+            Text(
+                text = "Note (Optional)",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingXs))
+
+            OutlinedTextField(
+                value = uiState.noteText,
+                onValueChange = { viewModel.onNoteChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Savings note" },
+                placeholder = { Text("e.g., Coffee skipped, Pocket money") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
+                supportingText = {
+                    Text(
+                        text = "${uiState.noteText.length}/50",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End
+                    )
+                },
+                shape = MaterialTheme.shapes.medium,
+                enabled = !uiState.isProcessing,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+
+            // Lightweight Success Celebration Banner
+            AnimatedVisibility(
+                visible = uiState.saveStatus is SaveStatus.Success,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut()
+            ) {
+                ClinkCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = ClinkDimens.current.spacingSm),
+                    containerColor = SuccessGreen.copy(alpha = 0.12f),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(ClinkDimens.current.spacingMd),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.size(ClinkDimens.current.spacingSm))
+                        Text(
+                            text = "CLINK! ${uiState.savedAmount?.formatDisplay() ?: ""} saved 🐷",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = SuccessGreen
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingLg))
 
             // Primary Save Action Button
             ClinkButton(
-                text = if (uiState.isLoading) "Clinking..." else "Clink It! 🐷",
+                text = when {
+                    uiState.isLoading -> "Clinking..."
+                    uiState.saveStatus is SaveStatus.Success -> "Saved! 🎉"
+                    else -> "Clink It! 🐷"
+                },
                 onClick = { viewModel.onAddMoney() },
-                enabled = !uiState.isProcessing,
-                isLoading = uiState.isLoading
+                enabled = uiState.canSave,
+                isLoading = uiState.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Save ${uiState.selectedAmount.formatDisplay()} to Pig"
+                    }
             )
 
-            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingSm))
+            Spacer(modifier = Modifier.height(ClinkDimens.current.spacingMd))
         }
     }
 }

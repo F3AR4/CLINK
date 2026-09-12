@@ -2,6 +2,22 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-008] - Add Money Experience Polish
+
+### Added
+- Presentation Layer:
+  - Redesigned `AddMoneyScreen` with high-polish micro-saving experience:
+    - Quick denomination selection row with 4 interactive `ClinkAmountChip`s (₹10, ₹20, ₹50, ₹100) featuring highlighted borders, container fills, and checkmarks.
+    - Custom Rupee amount numeric input with `₹ ` prefix, clear action, and real-time inline validation feedback ("Amount must be greater than ₹0", "Please enter an amount", "Maximum micro-saving amount is ₹1,00,000").
+    - Strict integer paise arithmetic throughout (`Money.fromRupees()`) — zero `Double` or `Float` conversions.
+    - Optional note field (capped at 50 characters with live character counter) with automatic whitespace trimming and fallback to `"Clink savings"`.
+    - Lightweight celebratory success banner ("CLINK! ₹X saved 🐷") on save before smooth return to Home.
+    - Double-tap lockout via `isProcessing` flag disabling button during and post-success.
+    - `resetState()` on ViewModel for clean form reuse.
+  - `AddMoneyUiState` extended with `customAmountText`, `isCustomAmount`, `noteText`, `validationError`, `savedAmount`, and computed `canSave`.
+- Unit Testing:
+  - Expanded `AddMoneyViewModelTest` from 5 to 16 tests covering quick amounts, custom amounts, validations (empty, zero, non-numeric, overflow), note trimming, double-tap lockout, event emissions, and state resets. Total unit tests across project increased to 96.
+
 ## [TASK-007] - Home Dashboard Polish
 
 ### Added

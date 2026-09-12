@@ -50,3 +50,6 @@
 15. **Post-Success Click Lockout in Interactive Flows**:
    - Guarding against rapid double-taps only while `isLoading` allows extra taps after a fast local operation completes (e.g. state transitions to `Success`) before the UI navigation transition pops the back stack.
    - Introducing `isProcessing: Boolean get() = saveStatus is SaveStatus.Saving || saveStatus is SaveStatus.Success` and binding Compose button `enabled = !isProcessing` locks out subsequent taps for the entire remaining lifetime of that screen.
+16. **Keyboard Overlay Handling in Automated UI Testing**:
+   - When entering text into an `OutlinedTextField` during UI tests, the Android software keyboard window remains elevated and captures touch events intended for lower screen components (such as bottom-anchored action buttons).
+   - Explicitly dispatching `adb shell input keyevent 4` (KEYCODE_BACK) dismisses the soft keyboard window while keeping the current activity on screen, allowing subsequent coordinate taps to reach their intended target buttons without occlusion.
