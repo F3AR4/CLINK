@@ -2,6 +2,30 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-010] - History + Transaction UI
+
+### Added
+- Presentation Layer:
+  - `TransactionDateFormatter`: Pure presentation utility providing contextual relative timestamps ("Today, h:mm a", "Yesterday, h:mm a", "d MMM, h:mm a"), date section headers ("TODAY", "YESTERDAY", "10 SEP"), and accessibility announcements with parameterized `now` and `ZoneId` for deterministic unit testing.
+  - `TransactionUiModel`: Data representation decoupling date string formatting from Compose recomposition.
+  - `HistoryViewModel`: Dedicated ViewModel extracted into its own file; exposes `HistoryUiState` with reactive `totalSaved` (derived via `Money.plus` / integer paise math), `transactionCount`, `groupedTransactions` (preserving newest-first ordering), loading and error handling with `retry()`.
+  - `HistoryScreen`: Redesigned transaction timeline:
+    - Aggregate Summary Card: "TOTAL SAVED", large formatted amount, "X savings" count badge in `primaryContainer`.
+    - Grouped list in `LazyColumn` with uppercase date headers and stable item keys (`key = { it.transaction.id }`).
+    - `TransactionItem`: Circle icon with `ArrowDownward` credit indicator, prominent positive amount (`+ ₹50`), note with fallback ("Clink savings"), "Saved" pill tag, relative timestamp, and accessibility semantics.
+    - `ClinkEmptyState`: Mascot illustration, "No savings yet", "Your little savings journey will show up here.", and "Save Your First ₹10" button.
+    - Friendly Error State: Warning icon, error description, and "Retry" button.
+    - Loading State: Centered `CircularProgressIndicator`.
+  - Navigation:
+    - `ClinkNavGraph.kt`: Connected `onNavigateToAddMoney` callback to `HistoryScreen` allowing empty state action to open Add Money directly.
+    - `Screen.kt`: Added default parameter `pigId: Long = 1L` to `Screen.AddMoney.createRoute()`.
+- Unit Testing:
+  - `TransactionDateFormatterTest`: 8 tests covering today, yesterday, same-year, different-year, date group headers, and accessibility descriptions.
+  - `HistoryViewModelTest`: 7 tests covering loading state, populated transactions, aggregate totals, empty list handling, raw domain flow compatibility, savedStateHandle arguments, error handling, and retry recovery.
+- Runtime Verification:
+  - Verified on Android 16 (`emulator-5554`) across Scenarios A through L with zero crashes, zero errors, and clean logcat.
+
+
 ## [TASK-009] - Goals Engine
 
 ### Added

@@ -1,6 +1,51 @@
 # CLINK Testing History
  
-## TASK-009 Goals Engine Test Record (2026-09-12)
+## TASK-010 History + Transaction UI Test Record (2026-09-12)
+ 
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat testDebugUnitTest`: **131/131 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate)
+  - `TransactionDateFormatterTest`: 8/8 (today, yesterday, same year, different year, group headers, accessibility descriptions, blank fallback)
+  - `HistoryViewModelTest`: 7/7 (initial loading state, populated transactions, aggregate total calculation, empty list handling, convenience raw transactions flow, pigId argument passing, repository error handling, retry recovery)
+  - All existing domain, data, usecase, and presentation tests pass 100%.
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`)
+1. **Scenario A - Empty History**:
+   - Cleared app data, completed onboarding, opened History: empty state rendered with mascot, title "No savings yet", description "Your little savings journey\nwill show up here.", and primary "Save Your First ₹10" button. (PASS)
+2. **Scenario B - First Transaction**:
+   - Tapped "Save Your First ₹10" on empty state -> Add Money screen opened -> saved ₹10 -> returned to History: Summary card displayed "TOTAL SAVED ₹10" and "1 saving", "TODAY" section header, and "+ ₹10" transaction card with fallback note "Clink savings". (PASS)
+3. **Scenario C - Multiple Transactions**:
+   - Saved ₹20, ₹50, and ₹100 sequentially -> verified History updated to show 4 transactions totaling ₹180 in newest-first order (₹100, ₹50, ₹20, ₹10). (PASS)
+4. **Scenario D - Notes**:
+   - Saved with custom notes ("Chai save", "Takeout skipped") and blank notes -> verified custom notes render cleanly and blank notes fall back to "Clink savings". (PASS)
+5. **Scenario E - Timestamps**:
+   - Verified timestamps render as contextual relative dates ("Today, 4:32 PM", "Today, 4:31 PM") rather than raw epoch millis. (PASS)
+6. **Scenario F - Persistence Across Process Death**:
+   - Terminated app via `am force-stop`, relaunched, and navigated to History -> verified all 4 transactions and ₹180 total persisted intact. (PASS)
+7. **Scenario G - Reactive Update**:
+   - Verified that whenever savings transactions are recorded, the History timeline updates automatically without manual database refresh. (PASS)
+8. **Scenario H - Empty -> Populated**:
+   - Verified empty state smoothly transitions to populated summary card and timeline as soon as the first deposit is made. (PASS)
+9. **Scenario I - Dark Mode & Theming**:
+   - Toggled system night mode -> captured screenshots for both dark and light modes. Verified card elevations, contrast, primaryContainer badge, and secondary credit green tint. (PASS)
+10. **Scenario J - Navigation Integrity**:
+    - Verified `Home -> History`, `Home -> View All`, `Pig Detail -> History`, `History -> Add Money`, `History -> Home` back stacks operate without broken links. (PASS)
+11. **Scenario K - Large List / Lazy List Scrolling**:
+    - Added 6 additional savings (total 10 transactions) -> verified buttery-smooth vertical scrolling in `LazyColumn` with stable keys. (PASS)
+12. **Scenario L - Logcat Audit**:
+    - Audited logcat with `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E`. 0 fatal exceptions, 0 crashes, 0 errors. (PASS)
+
+
  
 ### Environment
 - **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)

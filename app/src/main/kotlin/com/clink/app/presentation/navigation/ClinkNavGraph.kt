@@ -77,7 +77,8 @@ fun ClinkNavGraph(
             )
         ) {
             HistoryScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddMoney = { navController.navigate(Screen.AddMoney.createRoute()) }
             )
         }
 

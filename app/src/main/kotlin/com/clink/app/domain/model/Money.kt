@@ -50,6 +50,7 @@ value class Money(val paise: Long) : Comparable<Money> {
 
     companion object {
         val ZERO = Money(0L)
+        val zero: Money = ZERO
         val RS_10 = Money(1_000L)
         val RS_20 = Money(2_000L)
         val RS_50 = Money(5_000L)

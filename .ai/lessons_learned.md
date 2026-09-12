@@ -62,3 +62,10 @@
    - Always execute Gradle tasks sequentially (`testDebugUnitTest` -> `assembleDebug` -> `lintDebug`) or wait for the prior process to finish.
 19. **Authoritative State vs. Derived Progress**:
    - Instead of storing a mutable `savedAmount` on a Goal entity (which inevitably drifts or desynchronizes when transactions occur), deriving `GoalProgress` reactively by combining `Pig.balance` with `Goal.targetAmount` in `ObserveGoalsUseCase` ensures 100% mathematical consistency without secondary balance tables.
+20. **Recomposition-Free Lazy List Formatting**:
+   - Formatting timestamps inside `LazyColumn` item composables causes repeated string parsing and calendar allocations on every scroll frame.
+   - Pre-mapping domain items into a `TransactionUiModel` with formatted strings and content descriptions in `HistoryViewModel` ensures list scrolling is 100% recomposition-free and allocation-free.
+21. **Binary Output Redirection in Windows PowerShell for ADB**:
+   - In Windows PowerShell, redirecting `adb exec-out screencap -p > file.png` writes UTF-16LE text with a byte-order mark instead of raw binary bytes, corrupting image files.
+   - Safe approaches: Save directly on device and pull (`adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png file.png`), or use `[System.IO.File]::WriteAllBytes`.
+

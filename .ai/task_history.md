@@ -345,3 +345,42 @@
      - Scenario J (Navigation Flow): Verified `Home -> Goals -> Create Goal -> Goals -> Home` back stack integrity: PASS.
      - Scenario K (Logcat Audit): `adb logcat -d -s AndroidRuntime:E` verified 0 crashes, 0 fatal exceptions, 0 SQLite errors: PASS.
 - **Status**: COMPLETE & VERIFIED
+
+### TASK-010: History + Transaction UI
+- **Date**: 2026-09-12
+- **Goal**: Upgrade and polish the CLINK History screen into a modern, trustworthy, and joyful savings transaction timeline. Add aggregate summary card ("TOTAL SAVED"), group transactions by date headers ("TODAY", "YESTERDAY", etc.), render prominent positive savings amounts (`+ ₹50`), display notes with fallback ("Clink savings"), provide relative human-readable timestamps, ensure smooth `LazyColumn` scrolling, support explicit loading, empty ("Save Your First ₹10"), and error states with retry, and maintain zero floating-point monetary arithmetic.
+- **Actions Taken**:
+  1. Presentation Layer:
+     - Implemented `TransactionDateFormatter`: deterministic contextual date/time formatter supporting "Today, h:mm a", "Yesterday, h:mm a", "d MMM, h:mm a", uppercase date group headers ("TODAY", "YESTERDAY", "10 SEP"), and screen reader accessibility descriptions. Configurable `now` and `ZoneId` for 100% deterministic unit testing.
+     - Created dedicated `HistoryViewModel`: observes `GetTransactionsUseCase(pigId)`, pre-computes `TransactionUiModel`s to eliminate recomposition recomputation, calculates aggregate `totalSaved` via `Money.plus` integer paise math, counts transactions, groups by date header preserving newest-first order, catches errors into `errorMessage`, and provides `retry()` to restart the observation stream.
+     - Upgraded `HistoryScreen`:
+       - `ClinkTopBar`: "Saving History" with back navigation.
+       - Aggregate Summary Card: "TOTAL SAVED" with large bold display amount and "X savings" count badge in `primaryContainer`.
+       - Date Header Sections: uppercase letter-spaced headers ("TODAY", "YESTERDAY").
+       - `TransactionItem`: Credit icon container, prominent positive amount (`+ ₹50`), note with fallback ("Clink savings"), "Saved" pill tag, relative timestamp, and accessibility semantics.
+       - `ClinkEmptyState`: Mascot illustration, "No savings yet", "Your little savings journey will show up here.", and "Save Your First ₹10" primary button.
+       - Friendly Error State: Warning icon, error message, and "Retry" button.
+       - Loading State: Centered `CircularProgressIndicator`.
+     - Connected `onNavigateToAddMoney` in `ClinkNavGraph.kt` so empty state action navigates directly to Add Money.
+  2. Automated Testing:
+     - `TransactionDateFormatterTest.kt`: 8 unit tests covering today, yesterday, same year, different year, group headers, and accessibility descriptions.
+     - `HistoryViewModelTest.kt`: 7 unit tests covering initial loading state, populated transactions, aggregate total calculation, empty list handling, convenience raw transactions flow, pigId argument passing, repository error handling, and retry recovery.
+     - All 131 project unit tests pass 100%.
+  3. Build & Lint:
+     - `assembleDebug`: SUCCESSFUL.
+     - `lintDebug`: 0 errors, 0 warnings.
+  4. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Scenario A (Empty History): Fresh state -> verified empty state with mascot, message, and "Save Your First ₹10" button: PASS.
+     - Scenario B (First Transaction): Tapped "Save Your First ₹10" -> saved ₹10 -> returned to History -> verified summary "TOTAL SAVED ₹10", "1 saving", "TODAY", "+ ₹10", note "Clink savings": PASS.
+     - Scenario C (Multiple Transactions): Saved ₹20, ₹50, ₹100 -> verified 4 transactions, ₹180 total, 4 savings, newest-first ordering: PASS.
+     - Scenario D (Notes): Verified custom notes ("Chai save", "Takeout skipped") and fallback notes ("Clink savings"): PASS.
+     - Scenario E (Timestamps): Verified human-readable relative timestamps ("Today, 4:32 PM"): PASS.
+     - Scenario F (Persistence): Force-stopped and relaunched -> opened History -> all 4 transactions and ₹180 total persisted: PASS.
+     - Scenario G (Reactive Updates): New savings automatically appear in History without manual database refresh: PASS.
+     - Scenario H (Empty -> Populated): Empty state smoothly disappears and transforms into summary + timeline list: PASS.
+     - Scenario I (Dark Mode): Captured screenshots in night mode -> verified contrast, surfaces, typography, and badges: PASS.
+     - Scenario J (Navigation Flow): Verified `Home -> History`, `Home -> View All`, `History -> Add Money`, `History -> Home` back stacks: PASS.
+     - Scenario K (Large List): Added 6 additional savings -> verified smooth `LazyColumn` scrolling: PASS.
+     - Scenario L (Logcat Audit): `adb logcat -d -s AndroidRuntime:E SQLite:E Room:E` verified 0 fatal exceptions, 0 runtime errors: PASS.
+- **Status**: COMPLETE & VERIFIED
+

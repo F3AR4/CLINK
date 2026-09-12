@@ -22,7 +22,7 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-009 Complete)
+## 4. Current State (TASK-010 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
@@ -31,13 +31,14 @@
 - Transaction Engine hardened and verified with atomic consistency.
 - Home Dashboard polished as central everyday savings experience.
 - Add Money Experience polished as primary micro-saving action with quick chips, custom input, and real-time validation.
-- Goals Engine fully implemented and runtime verified:
-  - Savings targets (`Goal`) tied to a Pig.
-  - Reactive progress derived directly from authoritative `Pig.balance` via pure domain `GoalProgressCalculator`.
-  - Zero `Double` / `Float` monetary arithmetic — 100% integer paise calculations.
-  - Deterministic active-first ordering: incomplete goals ordered by `createdAt DESC`, followed by completed goals.
-  - Safe goal deletion: removing a goal never modifies Pig balance, transactions, or user savings.
-  - Integrated into Home dashboard, Pig Detail, and dedicated Goals & Create Goal screens.
+- Goals Engine fully implemented and runtime verified.
+- History + Transaction UI polished and runtime verified:
+  - Aggregate Summary Card: reactively displays "TOTAL SAVED" and savings count badge.
+  - Contextual date and time formatting via `TransactionDateFormatter` with zero floating-point arithmetic.
+  - Timeline grouped by uppercase date headers ("TODAY", "YESTERDAY") in deterministic descending order.
+  - `TransactionItem` with prominent positive amounts (`+ ₹50`), notes, fallback handling, and accessibility descriptions.
+  - Smooth `LazyColumn` scrolling with pre-computed `TransactionUiModel`s.
+  - Explicit loading, friendly error with retry, and empty state navigating to Add Money.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
@@ -45,7 +46,7 @@
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
   - Unit Tests: `.\gradlew.bat testDebugUnitTest` verified (131 tests, 0 failures, 100% PASS).
   - Static Analysis: `.\gradlew.bat lint` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-K verified.
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 crashes, Scenarios A-L verified.
 
 
 

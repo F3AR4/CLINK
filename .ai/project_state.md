@@ -2,8 +2,8 @@
 
 - **Last Updated**: 2026-09-12
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-009: Goals Engine
-- **Status**: COMPLETE & VERIFIED (APK assembled, 131/131 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator)
+- **Current Task**: TASK-010: History + Transaction UI
+- **Status**: COMPLETE & VERIFIED (APK assembled, 131/131 unit tests passing, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator across Scenarios A-L)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -25,8 +25,11 @@
     - `CreateGoalScreen`: Mascot illustration, goal name input with 0/50 counter, target amount in whole Rupees, real-time input validation, double-tap protected submit button
     - `HomeScreen`: Integrated compact active goal summary card (displaying target, progress bar, current / target, and remaining amount)
     - `PigDetailScreen`: Integrated concise goal summary card with progress bar
-    - `AddMoneyScreen`, `OnboardingScreen`, `HistoryScreen`
+    - `HistoryScreen`: Upgraded transaction timeline with reactive total saved aggregate summary card, date grouping headers ("TODAY", "YESTERDAY", etc.), prominent positive amounts (+ ₹50), notes, relative timestamps, accessibility semantics, friendly error state with retry, and empty state navigating to Add Money
+    - `AddMoneyScreen`, `OnboardingScreen`
 - **Testing**: VERIFIED (131 unit tests, 0 failures, 100% pass rate via `.\gradlew.bat testDebugUnitTest`)
+  - `TransactionDateFormatterTest.kt` (10/10 pass)
+  - `HistoryViewModelTest.kt` (7/7 pass)
   - `GoalProgressCalculatorTest.kt` (8/8 pass)
   - `CreateGoalUseCaseTest.kt` (5/5 pass)
   - `ObserveGoalsUseCaseTest.kt` (3/3 pass)
@@ -35,4 +38,4 @@
   - `GoalViewModelTest.kt` (4/4 pass)
   - `CreateGoalViewModelTest.kt` (7/7 pass)
   - `GoalRepositoryImplTest.kt` (5/5 pass)
-  - All existing tests (Money, AddMoney, Home, PigDetail, History, Onboarding, Room, DataStore) continue passing 100%
+  - All existing tests continue passing 100%
