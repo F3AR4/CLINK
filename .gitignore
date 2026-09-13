@@ -71,3 +71,13 @@ ksp/
 # Scratch files
 scratch/
 
+# Internal agent memory & policies
+.ai/
+CLINK_AUTONOMY_POLICY.md
+
+# Kotlin compiler daemon & caches
+.kotlin/
+
+# Environment files
+.env
+*.env

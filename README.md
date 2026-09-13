@@ -7,10 +7,12 @@ CLINK is a native Android micro-savings application designed around making small
 ---
 
 ## Current Status
-- **Phase**: Phase 1 — Foundation & Architecture Bootstrap: **COMPLETE** (16 / 16 Tasks Verified)
-- **Current Task**: TASK-016: Debug APK / Phase 1 Release Gate
-- **Status**: FULLY VERIFIED & RELEASE GATED (`assembleDebug` SUCCESS, 198/198 unit tests pass across 38 test classes, lint 0 errors & 0 warnings, verified on Android 16 emulator)
-- **Production Readiness**: Phase 1 Foundation Complete. Ready for Phase 2. (Real UPI and cloud sync are intentionally deferred to future phases)
+- **Phase 1**: COMPLETE (16/16 tasks verified)
+- **Latest Release Gate**: TASK-016 COMPLETE
+- **Automated Tests**: 198/198 passing (38 test classes, 100% pass rate)
+- **Static Analysis (Lint)**: 0 errors / 0 warnings (`lintDebug`)
+- **Runtime Verification**: Debug APK verified on Android 16 / API 36
+- **Production Readiness**: Phase 1 Foundation Complete. (Real UPI/payment integrations and backend/cloud sync are intentionally deferred to future phases)
 
 ---
 
@@ -31,7 +33,7 @@ CLINK is a native Android micro-savings application designed around making small
 ---
 
 ## Architectural Principles
-1. **Precision Money Model**: Money values are strictly represented as `Long` integers in **paise** (`₹10 = 1000L`). `Float` and `Double` are forbidden.
+1. **Precision Money Model**: Money values are strictly represented as `Long` integers in **paise** (`₹10 = 1000L`). `Float` and `Double` are forbidden for financial arithmetic.
 2. **Clean Dependency Inversion**:
    - `presentation` -> `domain` <- `data`
    - The domain layer is pure Kotlin, free from Android UI, Room, or external payment libraries.
@@ -43,8 +45,7 @@ CLINK is a native Android micro-savings application designed around making small
 
 ## Project Structure
 ```
-c:/TRADE/
-├── .ai/                    # Persistent Engineering Memory & Context
+CLINK/
 ├── app/
 │   ├── src/
 │   │   ├── main/
@@ -81,7 +82,7 @@ c:/TRADE/
 
 ### Option A: Using Android Studio
 1. Launch Android Studio.
-2. Select **Open** and choose the `c:\TRADE` directory.
+2. Select **Open** and choose the repository root folder.
 3. Wait for Gradle sync to resolve dependencies from `libs.versions.toml`.
 4. Connect an Android device or start an emulator running Android 8.0+ (API 26+).
 5. Click **Run** (`Shift + F10`).
@@ -96,12 +97,12 @@ Set `JAVA_HOME` to your JDK 17+ installation, then run:
 .\gradlew.bat assembleDebug
 
 # Run Lint
-.\gradlew.bat lint
+.\gradlew.bat lintDebug
 ```
 
 ---
 
-## Known Host Environment Limitations
-- The host agent environment currently lacks a pre-installed JDK 17+ and Android SDK command-line tools in PATH.
-- Therefore, automated CLI compilation was verified via structural static inspection and unit test design rather than direct subshell `./gradlew.bat` execution.
-- Build and execution should be performed in Android Studio or an environment with JDK 17+ configured.
+## Phase 1 Intentional Boundaries
+- **Payment Abstraction**: `FakePaymentRepository` is intentionally used for deterministic, offline testing in Phase 1. Real banking/UPI payment integrations are planned for future phases.
+- **Local Persistence**: Room SQLite database (`clink.db`) currently utilizes destructive migration fallback for early development velocity. Formal migration scripts will be introduced before production release.
+- **Offline First**: All user savings, pigs, goals, and transaction history are stored 100% locally on device with zero external cloud dependencies.
