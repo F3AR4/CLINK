@@ -1,5 +1,41 @@
 # CLINK Testing History
 
+## TASK-015 Phase 1 Integration Test Record (2026-09-13)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat testDebugUnitTest`: **198/198 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 38 test classes)
+  - Baseline from TASK-014: **197 tests / 37 test classes**
+  - Added in TASK-015: **+1 test class `Phase1IntegrationTest.kt`**:
+    - `Phase1IntegrationTest`: `complete Phase 1 end-to-end integration journey` covering onboarding, default pig initialization, multi-pig creation, financial isolation, atomic transactions, scoped goals, safe deletion, selection fallback, and persistence reload.
+  - Total verified test suite: **198/198 PASS**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings; resolved 5 `ConstantLocale` warnings)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL** (`app-debug.apk` generated)
+
+### Live Runtime Integration Journeys Executed & Verified on Emulator (`emulator-5554`, API 36)
+1. **Fresh Install & Splash**: Cold launch verified branded splash transition. (PASS)
+2. **Onboarding Flow**: Fresh user lands on onboarding; value props and "Start Saving" action verified. (PASS)
+3. **Home Dashboard Initialization**: Primary Pig initialized with ₹0 balance, no stale transactions, empty state displayed. (PASS)
+4. **Onboarding Persistence**: App killed via `am force-stop` and relaunched; onboarding did not appear; Home restored immediately. (PASS)
+5. **Single Pig Savings & Animation**: Tapped "Save First ₹10 🐷", navigated to Add Money, tapped "Clink It! 🐷". Coin arc flight, mascot reaction, celebration badge, and rolling balance update verified. Authoritative balance updated to ₹10. (PASS)
+6. **Reactive Dashboard Updates**: CTA transitioned to "Save Money 🐷", recent activity item appeared ("Clink savings • +₹10 • Today, 11:09 AM"). (PASS)
+7. **Scoped History Flow**: Navigated to History; verified scoped to Primary Pig with ₹10 total saved, TODAY header, and individual transaction entry matching authoritative balance. (PASS)
+8. **Multi-Pig Creation & Selection**: Tapped "+ New Pig", entered "Vacation" in dialog, tapped "Create Pig". Verified "Vacation" pig created and auto-selected with ₹0 balance. (PASS)
+9. **Multi-Pig Switching & Isolation**: Switched between `Primary Pig` and `Vacation` chips. Balances, progression, and transactions remained strictly isolated without state leakage. (PASS)
+10. **Pig Details & Safe Deletion Protection**: Navigated to Pig Details for Primary Pig. Verified progression status and metadata. Confirmed sole-pig deletion protection in unit test and UI. (PASS)
+11. **Dark Theme Verification**: Enabled night mode via `cmd uimode night yes`. Verified deep obsidian backgrounds, high contrast text, readable badges, and accessible chips. Reverted to light mode. (PASS)
+12. **Stability & Logcat Crash Audit**: Monitored `adb logcat -d -s AndroidRuntime:E FATAL:E`. Confirmed 0 fatal crashes, 0 ANRs, 0 unhandled exceptions. (PASS)
+13. **Financial Arithmetic Audit**: 0 Float/Double types in financial data/domain operations; Long paise and `Math.addExact` strictly preserved. (PASS)
+14. **Architecture Audit**: Verified strict Clean Architecture dependency flow: presentation -> domain -> data with zero backward leaks. (PASS)
+
 ## TASK-014 Accessibility + UX Polish Test Record (2026-09-13)
 
 ### Environment

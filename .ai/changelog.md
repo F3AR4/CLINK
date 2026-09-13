@@ -2,6 +2,25 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-015] - Phase 1 Integration Test & Reliability Verification
+
+### Added & Verified
+- Full Phase 1 Integration Verification:
+  - Added `Phase1IntegrationTest.kt` covering complete interconnected user journeys: onboarding, default pig initialization, multi-pig creation ("Vacation", "Gadgets", "Emergency"), savings isolation (zero balance cross-talk), scoped transactions, scoped goals progress, safe deletion with SQLite CASCADE, selection fallback to surviving pigs, and persistence reload across simulated process loss.
+  - Quality Gates: `testDebugUnitTest` 198/198 passed (100%), `lintDebug` 0 errors & 0 warnings, `assembleDebug` SUCCESS.
+  - Fixed 5 `ConstantLocale` lint warnings in `TransactionDateFormatter` by replacing static `final` formatters with dynamic getters respecting runtime locale changes.
+  - Live On-Device Emulator Verification (`emulator-5554`, Android 16 / API 36):
+    - Cold launch, branded splash delay, and onboarding completion.
+    - Home dashboard with default Primary Pig (₹0 balance, no stale transactions).
+    - Process restart persistence (onboarding remains completed, state restored).
+    - Savings journey: Saved ₹10, coin flight animation, "CLINK! +₹10 🐷", "Saved! 🎉", rolling balance settlement to ₹10.
+    - Scoped history: Transaction entry created once, matches authoritative balance.
+    - Multi-pig creation on device: Created "Vacation", verified auto-selection, switched between Primary Pig and Vacation chips with zero balance leakage.
+    - Themes: Verified light mode and dark mode (obsidian backgrounds, accessible contrast, no clipping).
+    - Logcat crash audit: 0 crashes, 0 fatal errors, 0 ANRs.
+  - Financial safety audit: Confirmed 0 Float/Double types in financial calculations; Long paise arithmetic and `Math.addExact` strictly enforced.
+  - Architecture audit: Verified unidirectional Clean Architecture flow (presentation -> domain -> data); domain is pure Kotlin.
+
 ## [TASK-014] - Accessibility + UX Polish
 
 ### Added & Improved

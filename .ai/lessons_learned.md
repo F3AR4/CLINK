@@ -39,10 +39,15 @@
 11. **Testing Onboarding StateFlow with StandardTestDispatcher**:
    - When ViewModels use `stateIn(started = SharingStarted.Eagerly)`, `testDispatcher.scheduler.advanceUntilIdle()` must be called to ensure mock flow emissions are processed before asserting state.
    - Using a backing `MutableStateFlow` in tests avoids missed single-shot emissions.
-12. **Financial Data Isolation**:
+12. **DateTimeFormatter and ConstantLocale Lint Warnings**:
+   - Assigning `DateTimeFormatter.ofPattern(pattern, Locale.getDefault())` to static `val` properties in Kotlin `object` declarations triggers the `ConstantLocale` Android lint warning because static instances do not update when the user changes device locale at runtime.
+   - Using a property getter (`get() = DateTimeFormatter.ofPattern(...)`) creates lightweight formatters dynamically with the current `Locale.getDefault()`, eliminating all lint warnings while respecting dynamic runtime locale updates.
+13. **Kotlin Default Parameter Signatures in MockK**:
+   - When a Room DAO method declares default arguments (such as `updatedAt: Long = System.currentTimeMillis()`), Kotlin generates overloaded/default bytecode that passes all parameters. MockK's `coEvery` stubbing must match the exact parameter arity invoked by caller code (e.g. `any(), any(), any()`), or unmatched calls will silently return default values when relaxed mocks are used.
+14. **Financial Data Isolation**:
    - Application lifecycle flags (like onboarding completion) must be strictly isolated in preferences (DataStore) away from SQLite/Room financial tables.
    - Toggling onboarding completion states must never touch, modify, or drop pigs, balances, or transactions.
-13. **Testing `SharingStarted.WhileSubscribed` StateFlows**:
+15. **Testing `SharingStarted.WhileSubscribed` StateFlows**:
    - When ViewModels configure `stateIn(SharingStarted.WhileSubscribed(...))`, the upstream flow is only activated when there is at least one active collector.
    - In unit tests asserting on `viewModel.uiState.value`, always launch a collection job in the test's `backgroundScope`:
      `backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }`

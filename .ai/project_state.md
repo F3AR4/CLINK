@@ -2,8 +2,8 @@
 
 - **Last Updated**: 2026-09-13
 - **Active Phase**: Phase 1 - Foundation
-- **Current Task**: TASK-014: Accessibility + UX Polish
-- **Status**: COMPLETE & VERIFIED (APK assembled, 197/197 unit tests passing across 37 test classes, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator across Scenarios A-Z)
+- **Current Task**: TASK-015: Phase 1 Integration Test
+- **Status**: COMPLETE & VERIFIED (APK assembled, 198/198 unit tests passing across 38 test classes, lint 0 errors & 0 warnings, live on-device runtime verified on API 36 emulator across all Phase 1 integration journeys: onboarding, multi-pig, savings isolation, goals, deletion fallback, dark mode, process restart, and 0-error logcat audit)
 
 ## Components Status
 - **Build System**: VERIFIED (Gradle 8.11.1 + JDK 21 + Android SDK 35/36; `assembleDebug` SUCCESS)
@@ -35,9 +35,8 @@
     - `HistoryScreen`: Scoped transaction history for specific pig with empty state targeting correct route pig
     - `GoalScreen` & `CreateGoalScreen`: Scoped goals with contextual top bar ("Goals • [Pig Name]"), accessible 48dp delete touch targets, and goal creation for specific pig
     - `OnboardingScreen`: Fast and concise value proposition with accessible touch targets
-- **Testing**: VERIFIED (197 unit tests across 37 test classes, 0 failures, 100% pass rate via `.\gradlew.bat test`)
-  - `ClinkThemeTest.kt` (added assertions for buttonHeight, chipHeight, amountChipHeight >= minTouchTarget 48.dp)
-  - `GoalViewModelTest.kt` (added reactive pigName contextual observation test)
-  - Plus 195 existing tests across all suites (total 197/197 tests across 37 test classes)
+- **Testing**: VERIFIED (198 unit tests across 38 test classes, 0 failures, 100% pass rate via `.\gradlew.bat testDebugUnitTest`)
+  - Added `Phase1IntegrationTest.kt`: Full end-to-end multi-tier integration test verifying fresh onboarding, default pig initialization, multi-pig creation, isolated savings, scoped transactions, reactive goals, safe deletion, selection fallback, and persistence reload.
+  - Plus 197 existing tests across all suites (total 198/198 tests across 38 test classes)
 
 

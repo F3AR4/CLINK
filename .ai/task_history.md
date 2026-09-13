@@ -529,3 +529,40 @@
   8. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
      - Executed Scenarios A through Z: Fresh launch, Onboarding, Home hierarchy, multiple pigs, pig selector checkmark and long names, Add Money, History, Goals contextual header, Pig Detail delete dialog error styling, light/dark mode, process restart persistence, logcat crash audit showing 0 fatal exceptions.
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-015: Phase 1 Integration Test
+- **Date**: 2026-09-13
+- **Goal**: Perform complete, end-to-end integration testing and verification of CLINK Phase 1. Verify cross-feature behavior as a connected system: onboarding, persistent user state, multi-pig creation/selection, isolated savings, transaction atomicity, goals progression, pig deletion cascade & fallback, savings animation lifecycle, persistence across process death, themes (light & dark), accessibility, edge cases, financial safety, and architecture invariants.
+- **Actions Taken**:
+  1. Full Automated Test Baseline & End-to-End Suite:
+     - Implemented `Phase1IntegrationTest.kt` covering the entire interconnected user journey:
+       - Fresh install state & onboarding completion.
+       - Idempotent primary pig initialization with ₹0 initial balance and empty transactions/goals.
+       - Multi-pig creation ("Vacation", "Gadgets", "Emergency") with automatic selection of newly created pigs.
+       - Independent financial savings (Pig A: ₹100, Pig B: ₹250, Pig C: ₹500) confirming 0 cross-talk to other pigs.
+       - Transaction history scoping and atomic SQLite records with notes and credit types.
+       - Scoped goal creation and dynamic progress calculation (Pig A Goa Trip: 20% -> 100% on subsequent deposit; Pig B and C untouched).
+       - Safe deletion of non-active pig preserving active selection.
+       - Safe deletion of active pig cascading records and falling back selection to surviving pig.
+       - Sole-pig protection: rejection of attempt to delete the only remaining pig.
+       - Persistence reload: reconstructing domain repositories from underlying data tables to verify full state integrity.
+  2. Quality Gates:
+     - `testDebugUnitTest`: 198/198 passed (38 test classes, 0 failures, 100% pass rate).
+     - Fixed `ConstantLocale` lint warning in `TransactionDateFormatter` by replacing static `final` formatters with dynamic property getters that evaluate `Locale.getDefault()` per invocation.
+     - `lintDebug`: 0 errors, 0 warnings.
+     - `assembleDebug`: Build SUCCESSFUL, `app-debug.apk` built.
+  3. Live On-Device Emulator Verification (`emulator-5554`, Android 16 / API 36):
+     - Cleared application data via ADB and executed cold launch.
+     - Verified branded splash delay transitioning to clean Onboarding screen.
+     - Completed onboarding -> navigated smoothly to Home with Primary Pig (₹0 balance, no transactions).
+     - Force-stopped app and relaunched -> confirmed onboarding state persisted and Home restored immediately without onboarding re-triggering.
+     - Executed ₹10 save flow on Primary Pig -> observed coin flight animation, "CLINK! +₹10 🐷", "Saved! 🎉", snackbar, and rolling balance update to ₹10.
+     - Verified History screen accurately reflects ₹10 credit with "Today, 11:09 AM".
+     - Tested Multi-Pig creation on device: tapped "+ New Pig", typed "Vacation", tapped "Create Pig" -> verified newly created "Vacation" pig auto-selected with ₹0 balance.
+     - Tapped "Primary Pig" chip -> verified immediate reactive switch back to Primary Pig with ₹10 balance and its transaction history intact.
+     - Enabled Dark Mode via `cmd uimode night yes` -> verified obsidian surfaces, typography readability, chip contrast, and progress bar clarity. Reverted to light mode.
+     - Logcat audit: 0 crashes, 0 fatal exceptions, 0 ANRs.
+  4. Financial Safety & Architecture Audit:
+     - Source audit confirmed 0 `Float`/`Double` usage in monetary calculations; `Money` (Long paise) and `Math.addExact` strictly enforced.
+     - Verified Clean Architecture dependency direction: presentation -> domain -> data; domain contains zero Android/Compose/Room dependencies.
+- **Status**: COMPLETE & VERIFIED

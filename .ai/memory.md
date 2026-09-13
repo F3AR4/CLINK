@@ -22,7 +22,7 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-014 Complete)
+## 4. Current State (TASK-015 Complete)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
@@ -50,14 +50,20 @@
   - Add Money UX: "Clink It!" button accessibility semantics announcing "Save ₹X to [Pig Name]".
   - Goals UX: Contextual top bar announcing "Goals • [Pig Name]", 48dp delete button touch target.
   - Destructive Actions UX: `DeletePigDialog` delete button styled with high-contrast error container colors to prevent accidental confirmation. Character counters (`0/30`) and IME actions added to `CreatePigDialog` and `RenamePigDialog`.
+- Phase 1 End-to-End Integration Verification (TASK-015):
+  - Full-spectrum end-to-end integration verified via `Phase1IntegrationTest.kt` (38 test classes, 198/198 passing).
+  - Resolved `ConstantLocale` lint warning in `TransactionDateFormatter` with dynamic getters for `DateTimeFormatter`.
+  - Quality gates: `assembleDebug` SUCCESS, `lintDebug` 0 errors & 0 warnings, `testDebugUnitTest` 198/198 PASS.
+  - Live on-device runtime verified on API 36 emulator (`emulator-5554`): fresh install, splash delay, onboarding, primary pig default initialization, multi-pig creation and persistent selection, isolated savings, scoped history, scoped goals, dark mode contrast, process death / restart recovery, and 0-error logcat audit.
+  - Phase 1 release gate ready for TASK-016.
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
   - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat test` verified (197 tests across 37 test classes, 0 failures, 100% PASS).
+  - Unit Tests: `.\gradlew.bat testDebugUnitTest` verified (198 tests across 38 test classes, 0 failures, 100% PASS).
   - Static Analysis: `.\gradlew.bat lintDebug` verified (SUCCESS, 0 errors, 0 warnings).
-  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 fatal crashes, Scenarios A-Z verified.
+  - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 fatal crashes, full Phase 1 user journeys verified.
 
 
 

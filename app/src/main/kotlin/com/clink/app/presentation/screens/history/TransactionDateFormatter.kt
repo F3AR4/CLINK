@@ -16,12 +16,17 @@ import java.util.Locale
  */
 object TransactionDateFormatter {
 
-    private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
-    private val sameYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.getDefault())
-    private val differentYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.getDefault())
+    private val timeFormatter: DateTimeFormatter
+        get() = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
+    private val sameYearFormatter: DateTimeFormatter
+        get() = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.getDefault())
+    private val differentYearFormatter: DateTimeFormatter
+        get() = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.getDefault())
 
-    private val headerSameYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
-    private val headerDifferentYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+    private val headerSameYearFormatter: DateTimeFormatter
+        get() = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+    private val headerDifferentYearFormatter: DateTimeFormatter
+        get() = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
 
     /**
      * Formats the transaction timestamp into a human-readable string.
