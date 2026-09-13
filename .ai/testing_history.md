@@ -1,5 +1,76 @@
 # CLINK Testing History
 
+## TASK-016 Debug APK / Phase 1 Release Gate Record (2026-09-13)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk` (Size: 18,278,500 bytes)
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Test Suite Gate
+- `.\gradlew.bat test`: **198/198 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 38 test classes)
+- Test breakdown:
+  - `com.clink.app.data.preferences`: 6 tests (2 classes)
+  - `com.clink.app.data.repository`: 22 tests (3 classes)
+  - `com.clink.app.domain.model`: 27 tests (5 classes)
+  - `com.clink.app.domain.usecase`: 91 tests (18 classes)
+  - `com.clink.app.presentation.components`: 10 tests (2 classes)
+  - `com.clink.app.presentation.main`: 3 tests (1 class)
+  - `com.clink.app.presentation.screens.addmoney`: 15 tests (2 classes)
+  - `com.clink.app.presentation.screens.goals`: 12 tests (1 class)
+  - `com.clink.app.presentation.screens.history`: 19 tests (2 classes)
+  - `com.clink.app.presentation.screens.home`: 12 tests (1 class)
+  - `com.clink.app.presentation.screens.onboarding`: 5 tests (1 class)
+  - `com.clink.app.presentation.screens.pigdetail`: 2 tests (1 class)
+  - `com.clink.app.presentation.theme`: 4 tests (1 class)
+  - Total: **198 tests across 38 classes** (all PASSED).
+
+### Clean Build Gate & APK Inspection
+- `.\gradlew.bat clean assembleDebug`: **BUILD SUCCESSFUL** in 54s.
+- APK Path: `C:\TRADE\app\build\outputs\apk\debug\app-debug.apk`
+- APK Size: 18,278,500 bytes (~17.43 MB)
+- Badging metadata (`aapt dump badging`):
+  - Application ID: `com.clink.app`
+  - versionCode: `1`
+  - versionName: `1.0.0`
+  - minSdk: `26`
+  - targetSdk: `35`
+  - compileSdkVersion: `35`
+  - debuggable: `application-debuggable` present
+  - launchable-activity: `com.clink.app.MainActivity`
+- Security inspection: Verified 0 keystores, 0 private credentials, 0 .env files packaged in APK.
+
+### Emulator Installation & Launch
+- `adb uninstall com.clink.app`: Success
+- `adb install -r C:\TRADE\app\build\outputs\apk\debug\app-debug.apk`: Success (Streamed Install)
+- `adb shell am start -n com.clink.app/.MainActivity`: Launched cleanly, branded splash screen displayed.
+
+### Final On-Device Smoke Test
+1. **Onboarding**: "Welcome to CLINK - Save small. Build habits. Clink!" displayed with mascot illustration and 3 value pillars. (PASS)
+2. **Onboarding Action**: Tapped "Start Saving" (at `540 2100`), smoothly navigated to Home screen. (PASS)
+3. **Home Dashboard Initial State**: Primary Pig initialized with ₹0 balance, "🐣 New" badge, 0% progress bar, empty recent activity. (PASS)
+4. **Add Savings Flow**: Tapped "+ Add Savings" FAB, navigated to "Add to Primary Pig", selected ₹10 default denomination. (PASS)
+5. **Animation & Commitment**: Tapped "Clink It! 🐷", coin flight animation executed, celebration badge displayed, navigated back to Home. (PASS)
+6. **Reactive Home Balance**: Total saved rolling animation settled exactly on authoritative ₹10, badge updated to "🌱 Growing", progress updated to 2%, recent activity added "+₹10" record. (PASS)
+7. **History Screen Scoping**: Tapped History card, verified scoped to Primary Pig with ₹10 total saved, "1 saving" badge, TODAY header, and "+₹10" transaction record matching balance. (PASS)
+8. **Return Home**: Tapped back button, returned to Home screen without reload or flicker. (PASS)
+9. **Cold Restart Persistence**: Force-stopped app (`am force-stop`) and relaunched from cold start. Verified onboarding did NOT re-trigger; Home screen restored immediately with Primary Pig at ₹10. (PASS)
+10. **Logcat Crash Audit**: Monitored `adb logcat -d -s AndroidRuntime:E FATAL:E`; confirmed 0 crashes, 0 fatal exceptions. (PASS)
+
+### Static Analysis (Lint Gate)
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** in 51s.
+- `app/build/reports/lint-results-debug.xml`: **0 errors, 0 warnings**.
+
+### Financial Safety & Release Configuration Check
+- Financial arithmetic: 100% Long paise (`Money`), zero Float/Double arithmetic. `Math.addExact` and `Math.multiplyExact` active. (PASS)
+- Architecture: Strict unidirectional flow (presentation -> domain -> data); domain is pure Kotlin. (PASS)
+- Release Configuration: Debug build variant verified; no production keys, zero real payment gateways; `FakePaymentRepository` preserved as intentional Phase 1 boundary. (PASS)
+- Phase 1 Limitations: Room destructive migration fallback and `FakePaymentRepository` preserved. (PASS)
+
 ## TASK-015 Phase 1 Integration Test Record (2026-09-13)
 
 ### Environment

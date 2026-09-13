@@ -2,6 +2,21 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-016] - Debug APK / Phase 1 Release Gate
+
+### Added & Verified
+- Phase 1 Release Gate & Artifact Verification:
+  - Clean Build Gate: Executed `.\gradlew.bat clean assembleDebug` (SUCCESS in 54s).
+  - Generated reproducible Debug APK: `app\build\outputs\apk\debug\app-debug.apk` (18,278,500 bytes, ~17.43 MB).
+  - APK Structure & Metadata: Inspected via `aapt.exe dump badging` (`com.clink.app`, versionCode 1, versionName 1.0.0, minSdk 26, targetSdk 35, compileSdkVersion 35, `application-debuggable`, launcher activity `com.clink.app.MainActivity`).
+  - Security Check: Audited APK zip archive; confirmed 0 keystores, 0 private credentials, 0 `.env` files.
+  - Device Installation & Launch: Freshly installed on `emulator-5554` (Android 16 / API 36) via `adb install -r`, cold launch verified splash delay and fresh onboarding.
+  - Final Smoke Test: Executed on-device end-to-end smoke test covering onboarding -> Home dashboard -> ₹10 savings via Add Money -> coin flight animation & celebration badge -> rolling balance settlement to ₹10 -> History screen scoped transaction -> back to Home -> cold app restart (`am force-stop`) with complete persistence and zero crashes.
+  - Automated Tests: `.\gradlew.bat test` confirmed 198/198 unit tests passing across 38 test classes (100% pass rate).
+  - Static Analysis: `.\gradlew.bat lintDebug` confirmed 0 errors, 0 warnings.
+  - Invariant Audits: Financial safety verified (zero Float/Double arithmetic, Long paise and `Math.addExact`/`multiplyExact` enforced); architecture boundary verified (presentation -> domain -> data); intentional Phase 1 boundaries preserved (`FakePaymentRepository`, Room destructive migration).
+  - Phase 1 officially complete: 16 / 16 tasks verified.
+
 ## [TASK-015] - Phase 1 Integration Test & Reliability Verification
 
 ### Added & Verified

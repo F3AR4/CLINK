@@ -566,3 +566,53 @@
      - Source audit confirmed 0 `Float`/`Double` usage in monetary calculations; `Money` (Long paise) and `Math.addExact` strictly enforced.
      - Verified Clean Architecture dependency direction: presentation -> domain -> data; domain contains zero Android/Compose/Room dependencies.
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-016: Debug APK / Phase 1 Release Gate
+- **Date**: 2026-09-13
+- **Goal**: Perform the final Debug APK and Phase 1 Release Gate verification for CLINK. Produce and verify a clean, installable, reproducible Debug APK, validate APK structure/metadata, execute a real-device smoke test, confirm full test suite & lint pass, audit money safety and security invariants, and formally close Phase 1.
+- **Actions Taken**:
+  1. Environment Verification:
+     - Verified JDK 21 at `C:\Users\jowan\.jdks\jbr-21.0.11` (Gradle 8.11.1).
+     - Verified Android SDK at `C:\Users\jowan\AppData\Local\Android\Sdk`.
+     - Verified active emulator `emulator-5554` (API 36 / Android 16).
+  2. Automated Test Suite Gate:
+     - Executed `.\gradlew.bat test`: **198/198 passed across 38 test classes** (0 failures, 0 errors, 0 skipped, 100% pass rate).
+  3. Clean Build Gate:
+     - Executed `.\gradlew.bat clean assembleDebug`: **BUILD SUCCESSFUL** in 54s.
+     - Generated `app-debug.apk` at `app\build\outputs\apk\debug\app-debug.apk` (18,278,500 bytes).
+  4. APK Structural & Metadata Inspection:
+     - Inspected with Android Build-Tools `aapt.exe dump badging`:
+       - Application ID: `com.clink.app`
+       - versionCode: `1`
+       - versionName: `1.0.0`
+       - minSdk: `26`
+       - targetSdk: `35`
+       - compileSdk: `35`
+       - Variant: debuggable (`application-debuggable`)
+       - Main Activity: `com.clink.app.MainActivity`
+     - Inspected APK package contents: confirmed 0 keystores, 0 private credentials, 0 `.env` files.
+  5. APK Installation & Launch:
+     - Uninstalled previous debug build via `adb uninstall com.clink.app`.
+     - Installed fresh `app-debug.apk` via `adb install -r`: Success.
+     - Launched `com.clink.app/.MainActivity`: App launched cleanly, branded splash transition verified.
+  6. Final On-Device Smoke Test:
+     - Reached Onboarding screen, tapped "Start Saving", reached Home screen with default Primary Pig (₹0).
+     - Tapped "+ Add Savings" FAB, navigated to Add Money (default ₹10 selected).
+     - Tapped "Clink It! 🐷", verified coin flight animation, celebration badge, and rolling balance update to ₹10.
+     - Verified Primary Pig badge updated to "🌱 Growing" and recent activity recorded "+₹10".
+     - Navigated to History screen, verified "+₹10" transaction record matches authoritative balance.
+     - Returned to Home screen.
+     - Force-stopped app (`adb shell am force-stop com.clink.app`) and relaunched from cold start.
+     - Verified persistence: onboarding did not re-trigger, Home screen restored immediately with Primary Pig at ₹10.
+     - Logcat crash audit (`adb logcat -d -s AndroidRuntime:E FATAL:E`): 0 crashes, 0 fatal exceptions.
+  7. Lint Gate:
+     - Executed `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings).
+  8. Money Safety & Security Audit:
+     - Audited codebase: 0 Float/Double in monetary calculations.
+     - Confirmed `Money` (Long paise), `Math.addExact`, and `Math.multiplyExact` strictly enforced.
+     - Confirmed 0 production payment gateways or secrets; `FakePaymentRepository` preserved as intentional Phase 1 boundary.
+     - Confirmed Room destructive migration fallback preserved as intentional Phase 1 development constraint.
+  9. Documentation & Phase 1 Sign-Off:
+     - Updated `README.md`, `.ai/project_state.md`, `.ai/memory.md`, `.ai/task_history.md`, `.ai/testing_history.md`, and `.ai/changelog.md`.
+- **Status**: COMPLETE & VERIFIED (Phase 1 officially complete: 16/16 tasks verified)
+

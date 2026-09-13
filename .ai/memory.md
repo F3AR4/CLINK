@@ -22,7 +22,7 @@
 - Under no circumstances should `Float` or `Double` be used for prices, balances, or transactions.
 - Arithmetic overflow protected by `Math.addExact` in `Money.plus`.
 
-## 4. Current State (TASK-015 Complete)
+## 4. Current State (Phase 1 Complete: 16/16 Tasks Verified)
 - Repository scaffolded with complete Clean Architecture layers (`domain`, `data`, `presentation`, `di`).
 - Core local savings mechanics fully implemented and runtime verified.
 - Material 3 Design System and Brand Identity established.
@@ -55,13 +55,22 @@
   - Resolved `ConstantLocale` lint warning in `TransactionDateFormatter` with dynamic getters for `DateTimeFormatter`.
   - Quality gates: `assembleDebug` SUCCESS, `lintDebug` 0 errors & 0 warnings, `testDebugUnitTest` 198/198 PASS.
   - Live on-device runtime verified on API 36 emulator (`emulator-5554`): fresh install, splash delay, onboarding, primary pig default initialization, multi-pig creation and persistent selection, isolated savings, scoped history, scoped goals, dark mode contrast, process death / restart recovery, and 0-error logcat audit.
-  - Phase 1 release gate ready for TASK-016.
+- Debug APK / Phase 1 Release Gate (TASK-016):
+  - Clean build verified: `.\gradlew.bat clean assembleDebug` SUCCESS in 54s.
+  - Debug APK generated & inspected: `app-debug.apk` (18,278,500 bytes, `com.clink.app`, versionCode 1, versionName 1.0.0, minSdk 26, targetSdk 35, application-debuggable).
+  - Security audit: 0 keystores, 0 private credentials, 0 real payment secrets packaged in APK.
+  - APK installed & verified on `emulator-5554` (API 36).
+  - Final smoke test verified: cold launch, onboarding, Home dashboard, ₹10 save, coin flight animation, celebration badge, rolling balance update, History, return Home, and cold restart persistence.
+  - Logcat audit: 0 crashes, 0 fatal exceptions.
+  - Static analysis: `lintDebug` verified 0 errors, 0 warnings.
+  - Full automated tests: 198/198 unit tests passing across 38 test classes (100% pass rate).
+  - PHASE 1 OFFICIALLY COMPLETE (16/16 TASKS VERIFIED).
 - **Environment & Build Verification**:
   - Android Studio 2026.1.4 (AI-261.26222.65.2614.16204760) verified.
   - JDK: OpenJDK 21 (`C:\Users\jowan\.jdks\jbr-21.0.11`).
   - Android SDK: `C:\Users\jowan\AppData\Local\Android\Sdk` (Platform 35/36 installed & verified).
-  - Debug APK build: `.\gradlew.bat assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
-  - Unit Tests: `.\gradlew.bat testDebugUnitTest` verified (198 tests across 38 test classes, 0 failures, 100% PASS).
+  - Debug APK build: `.\gradlew.bat clean assembleDebug` verified (SUCCESS, `app-debug.apk` generated).
+  - Unit Tests: `.\gradlew.bat test` verified (198 tests across 38 test classes, 0 failures, 100% PASS).
   - Static Analysis: `.\gradlew.bat lintDebug` verified (SUCCESS, 0 errors, 0 warnings).
   - Live Runtime Verification: Tested on Android 16 (`emulator-5554`), 0 fatal crashes, full Phase 1 user journeys verified.
 
