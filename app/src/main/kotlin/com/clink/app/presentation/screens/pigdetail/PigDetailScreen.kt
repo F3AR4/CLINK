@@ -22,6 +22,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -37,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -531,7 +534,19 @@ private fun RenamePigDialog(
                     label = { Text("Pig Name") },
                     singleLine = true,
                     isError = errorText != null,
-                    supportingText = errorText?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    supportingText = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(errorText ?: "", color = MaterialTheme.colorScheme.error)
+                            Text("${name.length}/30", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -596,7 +611,9 @@ private fun DeletePigDialog(
             if (canDelete) {
                 ClinkButton(
                     text = "Delete",
-                    onClick = onConfirm
+                    onClick = onConfirm,
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
                 )
             } else {
                 ClinkButton(

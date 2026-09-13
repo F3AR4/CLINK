@@ -108,4 +108,25 @@ class GoalViewModelTest {
         viewModel.clearError()
         assertThat(viewModel.uiState.value.errorMessage).isNull()
     }
+
+    @Test
+    fun `observes pig name when getSelectedPigUseCase is provided`() = runTest {
+        val mockPig = com.clink.app.domain.model.Pig(
+            id = 42L,
+            name = "Vacation Fund",
+            balance = Money.ZERO,
+            createdAt = 1000L
+        )
+        val selectedPigUseCase: com.clink.app.domain.usecase.GetSelectedPigUseCase = mockk()
+        every { selectedPigUseCase() } returns MutableStateFlow(mockPig)
+
+        val vm = GoalViewModel(
+            observeGoalsUseCase = observeGoalsUseCase,
+            deleteGoalUseCase = deleteGoalUseCase,
+            getSelectedPigUseCase = selectedPigUseCase
+        )
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.pigName).isEqualTo("Vacation Fund")
+    }
 }

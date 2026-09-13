@@ -26,6 +26,9 @@ class ClinkThemeTest {
         assertThat(dimens.spacingXl).isLessThan(dimens.spacingXxl)
         assertThat(dimens.spacingXxl).isLessThan(dimens.spacingXxxl)
         assertThat(dimens.minTouchTarget).isEqualTo(48.dp)
+        assertThat(dimens.buttonHeight).isAtLeast(dimens.minTouchTarget)
+        assertThat(dimens.chipHeight).isAtLeast(dimens.minTouchTarget)
+        assertThat(dimens.amountChipHeight).isAtLeast(dimens.minTouchTarget)
     }
 
     @Test

@@ -1,5 +1,54 @@
 # CLINK Testing History
 
+## TASK-014 Accessibility + UX Polish Test Record (2026-09-13)
+
+### Environment
+- **Device / Emulator**: `emulator-5554` (`medium_phone` AVD)
+- **Model**: `sdk_gphone64_x86_64`
+- **OS / API**: Android 16 (API Level 36)
+- **APK Installed**: `app/build/outputs/apk/debug/app-debug.apk`
+- **Gradle**: 8.11.1
+- **JDK**: OpenJDK 21.0.11 (`C:\Users\jowan\.jdks\jbr-21.0.11`)
+- **Android Studio**: 2026.1.4
+
+### Automated Tests Executed
+- `.\gradlew.bat test`: **197/197 PASSED** (0 failures, 0 errors, 0 skipped, 100% pass rate across 37 test classes)
+  - Baseline from TASK-013: **196 tests / 37 test classes**
+  - Added in TASK-014: **+1 test in `GoalViewModelTest` and expanded `ClinkThemeTest`**:
+    - `ClinkThemeTest`: Added assertions validating `buttonHeight`, `chipHeight`, and `amountChipHeight` meet or exceed `minTouchTarget` (48.dp).
+    - `GoalViewModelTest`: Added `observes pig name when getSelectedPigUseCase is provided`.
+  - Total verified test suite: **197/197 PASS**
+- `.\gradlew.bat lintDebug`: **BUILD SUCCESSFUL** (0 errors, 0 warnings)
+- `.\gradlew.bat assembleDebug`: **BUILD SUCCESSFUL**
+
+### Live Runtime Scenarios Executed & Verified on Emulator (`emulator-5554`, API 36)
+1. **Scenario A (Fresh launch)**: App launched smoothly to Home screen. (PASS)
+2. **Scenario B (Onboarding)**: Verified initial onboarding state and touch targets. (PASS)
+3. **Scenario C (Home visual hierarchy)**: Clear hero card, active pig, balance, progression bar, dominant Save CTA, and shortcut tiles. (PASS)
+4. **Scenario D (Create multiple pigs)**: Created "Travel" and "EmergencyFund". (PASS)
+5. **Scenario E (Pig selector)**: Visual checkmark icon (`✓`) on selected pig (`selected` state not communicated solely via color), tab role semantics. (PASS)
+6. **Scenario F (Switch pigs)**: Tapped between chips; hero card, progression, and recent activity smoothly updated. (PASS)
+7. **Scenario G (Save ₹10)**: Selected ₹10 denomination chip and completed save. (PASS)
+8. **Scenario H (Save ₹20)**: Tested ₹20 denomination chip save flow. (PASS)
+9. **Scenario I (Save custom amount)**: Validated custom amount input and range feedback. (PASS)
+10. **Scenario J (Verify animation)**: Verified coin flight, mascot squash bounce, celebration banner, and rolling balance update. (PASS)
+11. **Scenario K (Verify final balance)**: Authoritative balance reflected correctly on Home card and chip. (PASS)
+12. **Scenario L (History)**: Scoped transactions timeline with formatted dates, credit pills, notes, and aggregate total. (PASS)
+13. **Scenario M (Goals)**: Contextual top bar ("Goals • [Pig Name]"), target progress, and 48dp delete button. (PASS)
+14. **Scenario N (Pig Detail)**: Visual progression card, metadata summary, action buttons. (PASS)
+15. **Scenario O (Rename pig)**: Character counter (`0/30`), IME Done action, error handling. (PASS)
+16. **Scenario P (Delete confirmation)**: Destructive "Delete" button styled with prominent red error container. (PASS)
+17. **Scenario Q (Empty states)**: Pig empty activity ("Your pig is waiting for its first clink"), Goals empty state ("No goals yet"), and invalid pig route fallback. (PASS)
+18. **Scenario R (Error state)**: Input validation errors and actionable recovery paths. (PASS)
+19. **Scenario S (Long pig name)**: Verified 30-char limit and ellipsis handling on chips (`maxLines = 1`, `TextOverflow.Ellipsis`). (PASS)
+20. **Scenario T (Long note)**: Verified note length handling on transaction items and inputs. (PASS)
+21. **Scenario U (Light mode)**: Verified typography, colors, and layout in light theme. (PASS)
+22. **Scenario V (Dark mode)**: Toggled system night mode (`cmd uimode night yes`); verified contrast, surfaces, and badges. (PASS)
+23. **Scenario W (Rapid interaction)**: Rapid tapping on chips and save buttons; double-tap suppression verified. (PASS)
+24. **Scenario X (Navigation/back behavior)**: Back stack popped cleanly across Home, Add Money, Goals, and History. (PASS)
+25. **Scenario Y (Process restart)**: Force-stopped app (`am force-stop`) and relaunched; verified selected pig and balances persisted. (PASS)
+26. **Scenario Z (Logcat crash/ANR audit)**: Audited logcat with `adb logcat -d *:E`; verified 0 crashes, 0 ANRs, 0 runtime exceptions. (PASS)
+
 ## TASK-013 Testing & Reliability Hardening Test Record (2026-09-13)
 
 ### Environment

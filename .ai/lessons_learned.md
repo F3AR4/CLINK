@@ -30,6 +30,9 @@
    - All interactive components (buttons, chips, icon toggles) should guarantee a minimum touch target size of 48.dp (`LocalDimensions.current.minTouchTarget`).
    - Typography `letterSpacing` in Compose takes `TextUnit` (e.g. `1.2.sp`) rather than raw floats or numeric arguments.
    - Using `String.format(Locale.getDefault(), ...)` prevents lint `DefaultLocale` warnings while correctly formatting currency numbers according to user locale.
+   - For dynamic balance counters (`AnimatedMoneyDisplay`), using `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` ensures screen readers announce updated balances naturally upon animation settlement without interrupting ongoing accessibility speech.
+   - Selection indicators should never rely solely on color highlights. Providing an explicit visual checkmark icon (`✓`) together with `selectable(selected = ..., role = Role.Tab)` gives immediate visual clarity to users with color blindness and clear semantic cues to accessibility services.
+   - Destructive actions (like deleting a pig with cascading records) should feature distinct visual warning hierarchy (red error container with high-contrast text) and explicit confirmation copy to prevent accidental taps.
 10. **DataStore Concurrent Access in Unit Tests**:
    - Multiple `DataStore` instances pointing to the same file in the same process throw `IllegalStateException` unless the first instance's scope is cancelled.
    - In tests verifying persistence across repository instances, create `ds1` in a dedicated `CoroutineScope(job1)` and call `job1.cancel()` before creating `ds2`.

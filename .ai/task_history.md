@@ -498,3 +498,34 @@
   6. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
      - Executed scenarios A through AD: fresh install, onboarding, multi-pig creation (3 pigs), switching, savings isolation (verified directly in SQLite via ADB: Pig 3 received ₹20, other pigs ₹0 paise; transaction table isolated), goals and history per pig, dark mode / light mode rendering, process restart persistence, rapid interaction, logcat audit showing 0 fatal exceptions.
 - **Status**: COMPLETE & VERIFIED
+
+## TASK-014: Accessibility + UX Polish
+- **Date**: 2026-09-13
+- **Goal**: Polish the CLINK Android application into an accessible, responsive, coherent, and production-quality experience without redesigning architecture or altering financial correctness. Audit design tokens, home screen, add money, history, goals, pig details, empty/loading/error states, dialogs, dark/light theme, and accessibility semantics.
+- **Actions Taken**:
+  1. Design System Tokens:
+     - Standardized component dimension tokens in `Dimensions.kt`: `buttonHeight = 56.dp`, `chipHeight = 48.dp`, `amountChipHeight = 58.dp`, `mascotHero = 88.dp`, `mascotSplash = 140.dp`. All interactive elements guarantee >= 48dp touch targets.
+  2. Accessibility & Live Region Semantics:
+     - Added `liveRegion = LiveRegionMode.Polite` to `AnimatedMoneyDisplay` semantics so screen readers announce dynamic balance updates politely without interrupting speech.
+     - Enhanced `AddMoneyScreen` "Clink It!" button accessibility semantics to explicitly announce destination: `"Save ₹X to [Pig Name]"`.
+     - Standardized delete goal icon button in `GoalScreen` to 48dp minimum touch target (`ClinkDimens.current.minTouchTarget`).
+  3. Pig Selector & Navigation Polish:
+     - Enhanced `PigSelectorRow` on `HomeScreen`: added checkmark icon on selected chip (`selected` state is not communicated solely via color), marked with semantic `Role.Tab`, and added graceful text truncation with ellipsis for long pig names.
+     - Contextual Goals Header: Injected reactive pig resolution in `GoalViewModel` so `GoalScreen` announces `Goals • [Pig Name]`.
+  4. Form & Dialog Polish:
+     - `CreatePigDialog`: Added character counter supporting text (`0/30`), `ImeAction.Next` on pig name, and `ImeAction.Done` on target amount.
+     - `RenamePigDialog`: Added character counter (`0/30`), `ImeAction.Done`, and validation error handling.
+     - `DeletePigDialog`: Styled destructive "Delete" action button with high-contrast error container and on-error content colors to prevent accidental deletion.
+  5. UI Cleanup:
+     - Reused `TransactionDateFormatter.formatTransactionTime` on `HomeScreen` recent activity, eliminating duplicate private date formatting code. Added semantic accessibility content descriptions on recent transaction items.
+  6. Testing:
+     - Added touch target token assertions in `ClinkThemeTest.kt`.
+     - Added contextual pig name observation test in `GoalViewModelTest.kt`.
+     - Verified all 197 unit tests passing (100% pass rate).
+  7. Quality Gates:
+     - `assembleDebug`: PASS.
+     - `lintDebug`: PASS (0 errors, 0 warnings).
+     - `testDebugUnitTest`: PASS (197/197 tests passing).
+  8. Live Runtime Verification on Emulator (`emulator-5554`, Android 16 / API 36):
+     - Executed Scenarios A through Z: Fresh launch, Onboarding, Home hierarchy, multiple pigs, pig selector checkmark and long names, Add Money, History, Goals contextual header, Pig Detail delete dialog error styling, light/dark mode, process restart persistence, logcat crash audit showing 0 fatal exceptions.
+- **Status**: COMPLETE & VERIFIED

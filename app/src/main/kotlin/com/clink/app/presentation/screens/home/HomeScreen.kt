@@ -18,10 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
@@ -46,15 +48,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.lazy.items
 import com.clink.app.domain.model.Money
 import com.clink.app.domain.model.Pig
 import com.clink.app.domain.model.PigState
@@ -68,6 +76,7 @@ import com.clink.app.presentation.components.ClinkPigIllustration
 import com.clink.app.presentation.components.ClinkSectionHeader
 import com.clink.app.presentation.components.ClinkTopBar
 import com.clink.app.presentation.components.MoneyDisplay
+import com.clink.app.presentation.screens.history.TransactionDateFormatter
 import com.clink.app.presentation.theme.ClinkDimens
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -670,7 +679,6 @@ fun PigSelectorRow(
         items(pigs, key = { it.id }) { pig ->
             val isSelected = pig.id == selectedPigId
             Surface(
-                onClick = { onSelectPig(pig.id) },
                 shape = MaterialTheme.shapes.medium,
                 color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 border = BorderStroke(
@@ -679,8 +687,16 @@ fun PigSelectorRow(
                 ),
                 tonalElevation = if (isSelected) ClinkDimens.current.elevationLevel2 else ClinkDimens.current.elevationLevel0,
                 modifier = Modifier
-                    .height(48.dp)
+                    .height(ClinkDimens.current.chipHeight)
+                    .clip(MaterialTheme.shapes.medium)
+                    .selectable(
+                        selected = isSelected,
+                        role = Role.Tab,
+                        onClick = { onSelectPig(pig.id) }
+                    )
                     .semantics {
+                        selected = isSelected
+                        role = Role.Tab
                         contentDescription = "${pig.name}, ${if (isSelected) "selected" else "not selected"}, balance ${pig.balance.formatDisplay()}"
                     }
             ) {
@@ -689,15 +705,27 @@ fun PigSelectorRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(ClinkDimens.current.spacingXs)
                 ) {
-                    Text(
-                        text = "🐷",
-                        fontSize = 16.sp
-                    )
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Active Pig",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "🐷",
+                            fontSize = 16.sp
+                        )
+                    }
                     Text(
                         text = pig.name,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 140.dp)
                     )
                     if (isSelected) {
                         Text(
@@ -723,8 +751,9 @@ fun PigSelectorRow(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier
-                    .height(48.dp)
+                    .height(ClinkDimens.current.chipHeight)
                     .semantics {
+                        role = Role.Button
                         contentDescription = "Create new pig"
                     }
             ) {
@@ -789,7 +818,19 @@ fun CreatePigDialog(
                     label = { Text("Pig Name (e.g. Emergency Fund)") },
                     singleLine = true,
                     isError = errorText != null,
-                    supportingText = errorText?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    supportingText = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(errorText ?: "", color = MaterialTheme.colorScheme.error)
+                            Text("${name.length}/30", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -802,7 +843,17 @@ fun CreatePigDialog(
                     },
                     label = { Text("Target Amount in ₹ (Optional)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    prefix = {
+                        Text(
+                            text = "₹ ",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -837,13 +888,16 @@ fun RecentTransactionItem(
     transaction: Transaction,
     onClick: () -> Unit
 ) {
-    val formattedDate = formatRelativeTimestamp(transaction.timestamp)
+    val formattedDate = TransactionDateFormatter.formatTransactionTime(transaction.timestamp)
 
     ClinkCard(
         shape = MaterialTheme.shapes.medium,
         containerColor = MaterialTheme.colorScheme.surface,
         elevation = ClinkDimens.current.elevationLevel1,
-        onClick = onClick
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            contentDescription = "Saved ${transaction.amount.formatDisplay()}, note: ${transaction.note.ifEmpty { "Clink savings" }}, $formattedDate"
+        }
     ) {
         Row(
             modifier = Modifier
@@ -854,8 +908,8 @@ fun RecentTransactionItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                .clip(MaterialTheme.shapes.small)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -873,7 +927,9 @@ fun RecentTransactionItem(
                     text = transaction.note.ifEmpty { "Clink savings" },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = formattedDate,
@@ -901,18 +957,4 @@ fun RecentTransactionItem(
     }
 }
 
-private fun formatRelativeTimestamp(timestamp: Long): String {
-    val now = Calendar.getInstance()
-    val txTime = Calendar.getInstance().apply { timeInMillis = timestamp }
-    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp))
-
-    val isSameYear = now.get(Calendar.YEAR) == txTime.get(Calendar.YEAR)
-    val dayDiff = now.get(Calendar.DAY_OF_YEAR) - txTime.get(Calendar.DAY_OF_YEAR)
-
-    return when {
-        isSameYear && dayDiff == 0 -> "Today, $timeFormat"
-        isSameYear && dayDiff == 1 -> "Yesterday, $timeFormat"
-        else -> SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(timestamp))
-    }
-}
 

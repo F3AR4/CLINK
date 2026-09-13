@@ -69,7 +69,8 @@ import javax.inject.Inject
 data class GoalsUiState(
     val isLoading: Boolean = false,
     val goals: List<GoalProgress> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val pigName: String? = null
 )
 
 @HiltViewModel
@@ -77,11 +78,27 @@ class GoalViewModel @Inject constructor(
     private val observeGoalsUseCase: ObserveGoalsUseCase,
     private val deleteGoalUseCase: DeleteGoalUseCase,
     private val savedStateHandle: androidx.lifecycle.SavedStateHandle? = null,
-    private val getSelectedPigUseCase: com.clink.app.domain.usecase.GetSelectedPigUseCase? = null
+    private val getSelectedPigUseCase: com.clink.app.domain.usecase.GetSelectedPigUseCase? = null,
+    private val pigRepository: com.clink.app.domain.repository.PigRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GoalsUiState(isLoading = false))
     val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val explicitPigId = savedStateHandle?.get<String>("pigId")?.toLongOrNull()
+            if (explicitPigId != null && pigRepository != null) {
+                pigRepository.getPigById(explicitPigId).collect { pig ->
+                    _uiState.value = _uiState.value.copy(pigName = pig?.name)
+                }
+            } else if (getSelectedPigUseCase != null) {
+                getSelectedPigUseCase().collect { pig ->
+                    _uiState.value = _uiState.value.copy(pigName = pig?.name)
+                }
+            }
+        }
+    }
 
     val currentPigId: Long?
         get() = savedStateHandle?.get<String>("pigId")?.toLongOrNull()
@@ -144,7 +161,7 @@ fun GoalScreen(
     Scaffold(
         topBar = {
             ClinkTopBar(
-                title = "Savings Goals",
+                title = uiState.pigName?.let { "Goals • $it" } ?: "Savings Goals",
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack
             )
@@ -342,7 +359,7 @@ fun GoalProgressItem(
 
                 IconButton(
                     onClick = onDeleteClick,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(ClinkDimens.current.minTouchTarget)
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,

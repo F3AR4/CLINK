@@ -22,6 +22,9 @@ data class Dimensions(
     val spacingXxxl: Dp = 48.dp,
 
     val minTouchTarget: Dp = 48.dp,
+    val buttonHeight: Dp = 56.dp,
+    val chipHeight: Dp = 48.dp,
+    val amountChipHeight: Dp = 58.dp,
 
     val iconXs: Dp = 16.dp,
     val iconSm: Dp = 20.dp,
@@ -29,6 +32,8 @@ data class Dimensions(
     val iconLg: Dp = 32.dp,
     val iconXl: Dp = 48.dp,
     val iconHero: Dp = 72.dp,
+    val mascotHero: Dp = 88.dp,
+    val mascotSplash: Dp = 140.dp,
 
     val elevationLevel0: Dp = 0.dp,
     val elevationLevel1: Dp = 2.dp,

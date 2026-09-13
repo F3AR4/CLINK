@@ -392,7 +392,8 @@ fun AddMoneyScreen(
                     .fillMaxWidth()
                     .onGloballyPositioned { buttonCoordinates = it }
                     .semantics {
-                        contentDescription = "Save ${uiState.selectedAmount.formatDisplay()} to Pig"
+                        val destination = uiState.targetPig?.name ?: "Pig"
+                        contentDescription = "Save ${uiState.selectedAmount.formatDisplay()} to $destination"
                     }
             )
 

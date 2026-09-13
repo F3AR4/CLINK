@@ -2,6 +2,29 @@
 
 All notable changes to the CLINK project will be documented in this file.
 
+## [TASK-014] - Accessibility + UX Polish
+
+### Added & Improved
+- Accessibility:
+  - Standardized component dimension tokens in `Dimensions.kt`: `buttonHeight = 56.dp`, `chipHeight = 48.dp`, `amountChipHeight = 58.dp`, `mascotHero = 88.dp`, `mascotSplash = 140.dp`. All interactive elements guarantee >= 48dp touch targets.
+  - Added `liveRegion = LiveRegionMode.Polite` to `AnimatedMoneyDisplay` semantics so dynamic balance roll-ups are announced politely by screen readers.
+  - Added checkmark icon (`✓`) to selected chip in `PigSelectorRow` so selection state is not communicated solely by color. Added `Role.Tab` semantics and text truncation (`maxLines = 1, TextOverflow.Ellipsis, maxWidth = 140.dp`) for long pig names.
+  - Added destination pig name to "Clink It!" button accessibility semantics: `"Save ₹X to [Pig Name]"`.
+  - Expanded delete goal touch target to `ClinkDimens.current.minTouchTarget` (48.dp).
+- UX & Visual Hierarchy:
+  - Goals Screen: Injected reactive pig resolution in `GoalViewModel` so top bar displays contextual title `Goals • [Pig Name]`.
+  - Delete Pig Dialog: Styled destructive "Delete" action button with prominent error container and on-error content colors to prevent accidental confirmation.
+  - Create & Rename Pig Dialogs: Added character counters (`0/30`) and IME actions (`ImeAction.Next` and `ImeAction.Done`).
+  - Home Screen: Reused unified `TransactionDateFormatter.formatTransactionTime` on recent activity and added accessible transaction descriptions.
+- Testing:
+  - Added touch target token assertions in `ClinkThemeTest.kt`.
+  - Added reactive contextual pig name observation test in `GoalViewModelTest.kt`.
+  - All 197 unit tests passing (100% pass rate).
+- Quality Gates:
+  - `lintDebug`: 0 errors, 0 warnings.
+  - `assembleDebug`: PASS.
+  - Live runtime verification on `emulator-5554` (API 36) executing Scenarios A through Z.
+
 ## [TASK-013] - Testing & Reliability Hardening
 
 ### Hardened & Fixed
